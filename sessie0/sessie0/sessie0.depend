@@ -1,5 +1,5 @@
 # depslib dependency file v1.0
-1539936276 source:/home/student/Github/2018_labo_beeldinterpretatie/sessie0/sessie0/main.cpp
+1539936501 source:/home/student/Github/2018_labo_beeldinterpretatie/sessie0/sessie0/main.cpp
 	<iostream>
 	<opencv2/opencv.hpp>
 
