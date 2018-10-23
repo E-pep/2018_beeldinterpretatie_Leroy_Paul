@@ -4,6 +4,9 @@
 using namespace std;
 using namespace cv;
 
+void tekenvierkant(Mat img);
+void tekenlijn(Mat img);
+
 int main(int argc,const char** argv)
 {
     ///variables
@@ -27,26 +30,32 @@ int main(int argc,const char** argv)
         return 0;
     }
 
-    if( argc <= 2)
+
+    ///Collect data from arguments
+
+    string image_gray(parser.get<string>("image_gray"));
+    if(image_gray.empty())
     {
-        cout << "te weinig argumenten meegegeven" << endl;
+        cout << "argument niet gevonden" << endl;
+        parser.printMessage();
         return -1;
     }
 
 
-    ///Collect data from arguments
+    string image_color(parser.get<string>("image_gray"));
+    if(image_color.empty())
+    {
+        cout << "argument niet gevonden" << endl;
+        parser.printMessage();
+        return -1;
+    }
 
-    ImageName1 = argv[1];
-    ImageName2 = argv[2];
-
-    cout << ImageName1 << endl;
-    cout << ImageName2 << endl;
-
+    cout << image_gray << endl;
     ///inlezen van afbeelding1
 
-   Image1 = imread("/home/paul/Desktop/school/1819/2018_labo_beeldinterpretatie/introductie/test.png", IMREAD_COLOR);
+   Image1 = imread(image_gray, IMREAD_COLOR);
 
-  // cout << Image1 << endl;
+   //cout << Image1 << endl;
 
    Image2 = imread("/home/paul/Desktop/school/1819/2018_labo_beeldinterpretatie/introductie/testColor.png", IMREAD_COLOR);
 
@@ -94,9 +103,45 @@ int main(int argc,const char** argv)
 
     Mat grijs;
 
+    ///COLOR_BGR2GRAY => omzetten naar grijswaarden
+    cvtColor( Image2, grijs, COLOR_BGR2GRAY );
+
+    namedWindow("grijswaarden", WINDOW_AUTOSIZE);
+    imshow("grijswaarden", grijs);
+
+
+    ///Over de pixels van je zelfgemaakte grijswaarden afbeelding loopt en deze waardes print naar de command line.------------------------------------------------------
+
+    ///cout << grijs << endl;
+    for(int i =0;i < grijs.rows; i++)
+    {
+        for(int j = 0; j< grijs.cols; j++)
+        {
+       //     cout <<  (int)grijs.at<uchar>(i,j);
+        }
+        cout << endl;
+    }
+
+    ///Een canvas maakt en daar wat figuren op tekent (rechthoek, cirkel, ...)--------------------------------------------------------------------------------------------
+    ///https://docs.opencv.org/3.4.0/d3/d96/tutorial_basic_geometric_drawing.html
+    Mat canvas = Mat::zeros(400,400,CV_8UC3);
+    tekenvierkant(canvas);
+    tekenlijn(canvas);
+
+    imshow("canvas",canvas);
 
 
     waitKey(0);                                     /// Wait for a keystroke in the window
 
     return 0;
+}
+
+void tekenvierkant(Mat img)
+{
+    rectangle(img,Point(0,0),Point(50,50),Scalar(0,255,255),2,0);
+}
+
+void tekenlijn(Mat img)
+{
+    line(img, Point(200,200),Point(400,400),Scalar(12,150,75),8,0);
 }
