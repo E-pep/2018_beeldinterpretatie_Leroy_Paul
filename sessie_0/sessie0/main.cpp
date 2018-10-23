@@ -15,9 +15,9 @@ int main(int argc,const char** argv)
 
     ///Adding a little help option and command line parser input
     CommandLineParser parser(argc,argv,
-        "{help |  |show this message}"
-        "{image_gray  |  |(required)}"
-        "{image_color  |  |(required)}"
+        "{help h|  |show this message}"
+        "{image_gray  ig|  |(required)}"
+        "{image_color  ic|  |(required)}"
     );
 
     if(parser.has("help"))
@@ -46,7 +46,7 @@ int main(int argc,const char** argv)
 
    Image1 = imread("/home/paul/Desktop/school/1819/2018_labo_beeldinterpretatie/introductie/test.png", IMREAD_COLOR);
 
-   cout << Image1 << endl;
+  // cout << Image1 << endl;
 
    Image2 = imread("/home/paul/Desktop/school/1819/2018_labo_beeldinterpretatie/introductie/testColor.png", IMREAD_COLOR);
 
@@ -62,8 +62,40 @@ int main(int argc,const char** argv)
         return -1;
     }
 
-    namedWindow( "Display window", WINDOW_AUTOSIZE ); /// Create a window for display.
-    imshow( "Display window", Image1 );                /// Show our image inside it.
+    ///images apart origineel visualiseren ------------------------------------------------------------------------------------------------------------------------------
+
+    /// window van image 1
+
+    namedWindow( "Display original image 1", WINDOW_AUTOSIZE ); /// Create a window for display.
+    imshow( "Display original image 1", Image1 );                /// Show our image inside it.
+
+    ///window van image 2
+    imshow( "Display original image 2", Image2 );                /// Show our image inside it.
+
+
+
+
+    ///De kleurafbeelding opsplitst in kleurkanalen en die apart visualiseert--------------------------------------------------------------------------------------------
+
+    Mat gesplitst[3];
+    split(Image2,gesplitst);
+    ///splitst op in bgr
+    namedWindow("blauw kanaal", WINDOW_AUTOSIZE);
+    imshow("blauw kanaal", gesplitst[0]);
+
+    namedWindow("groen kanaal", WINDOW_AUTOSIZE);
+    imshow("groen kanaal", gesplitst[1]);
+
+
+    namedWindow("rood kanaal", WINDOW_AUTOSIZE);
+    imshow("rood kanaal", gesplitst[2]);
+
+    ///De kleurenafbeelding omzet in een grijswaarden beeld.-------------------------------------------------------------------------------------------------------------
+
+    Mat grijs;
+
+
+
     waitKey(0);                                     /// Wait for a keystroke in the window
 
     return 0;
