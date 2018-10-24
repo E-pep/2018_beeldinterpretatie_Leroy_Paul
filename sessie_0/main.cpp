@@ -40,9 +40,9 @@ int main(int argc,const char** argv)
         parser.printMessage();
         return -1;
     }
+    cout << image_gray << endl;
 
-
-    string image_color(parser.get<string>("image_gray"));
+    string image_color(parser.get<string>("image_color"));
     if(image_color.empty())
     {
         cout << "argument niet gevonden" << endl;
@@ -55,9 +55,8 @@ int main(int argc,const char** argv)
 
    Image1 = imread(image_gray, IMREAD_COLOR);
 
-   //cout << Image1 << endl;
 
-   Image2 = imread("/home/paul/Desktop/school/1819/2018_labo_beeldinterpretatie/introductie/testColor.png", IMREAD_COLOR);
+   Image2 = imread(image_color, IMREAD_COLOR);
 
     if( Image1.empty() )                      /// Check for invalid input
     {
@@ -117,14 +116,14 @@ int main(int argc,const char** argv)
     {
         for(int j = 0; j< grijs.cols; j++)
         {
-       //     cout <<  (int)grijs.at<uchar>(i,j);
+           cout <<  (int)grijs.at<uchar>(i,j);
         }
         cout << endl;
     }
 
     ///Een canvas maakt en daar wat figuren op tekent (rechthoek, cirkel, ...)--------------------------------------------------------------------------------------------
     ///https://docs.opencv.org/3.4.0/d3/d96/tutorial_basic_geometric_drawing.html
-    Mat canvas = Mat::zeros(400,400,CV_8UC3);
+    Mat canvas = Mat::zeros(400,400,CV_8UC3);       ///aanmaken van canvas
     tekenvierkant(canvas);
     tekenlijn(canvas);
 
@@ -136,6 +135,7 @@ int main(int argc,const char** argv)
     return 0;
 }
 
+/// functies voor het tekenen op het canvas
 void tekenvierkant(Mat img)
 {
     rectangle(img,Point(0,0),Point(50,50),Scalar(0,255,255),2,0);

@@ -11,7 +11,7 @@
 				<Option object_output="obj/Debug/" />
 				<Option type="1" />
 				<Option compiler="gcc" />
-				<Option parameters="-image1 = /home/student/Github/2018_labo_beeldinterpretatie/introductie" />
+				<Option parameters='-ig=&quot;test.png&quot; -ic=&quot;testColor.png&quot;' />
 				<Compiler>
 					<Add option="-g" />
 				</Compiler>
