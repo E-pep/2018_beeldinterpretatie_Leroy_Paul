@@ -1,0 +1,5 @@
+# depslib dependency file v1.0
+1540539736 source:/home/student/Desktop/Leroy_paul/2018_beeldinterpretatie_Leroy_Paul/sessie_1/opdracht1.1/1_1/main.cpp
+	<iostream>
+	<opencv2/opencv.hpp>
+
