@@ -77,9 +77,9 @@ int main(int argc,const char** argv)
   /*  namedWindow( "Display original image 1", WINDOW_AUTOSIZE ); /// Create a window for display.
     imshow( "Display original image 1", Image1 );                /// Show our image inside it.
 
-   */ namedWindow( "Display original image 2", WINDOW_AUTOSIZE ); /// Create a window for display.
+    namedWindow( "Display original image 2", WINDOW_AUTOSIZE ); /// Create a window for display.
     imshow( "Display original image 2", Image2 );                /// Show our image inside it.
-
+    */
 
     /// segmenting skin color
 
@@ -91,7 +91,7 @@ int main(int argc,const char** argv)
     Mat GREEN = gesplitst[1];
     Mat BLUE = gesplitst[0];
 
-    ///zeros to fill mask with
+    ///zeros to fill mask with zeros
     Mat mask1 = Mat::zeros(Image1.rows, Image1.cols, CV_8UC1);
     Mat mask2 = mask1.clone();
 
@@ -111,45 +111,67 @@ int main(int argc,const char** argv)
         }
     }
 
-    //namedWindow( "Display segmented", WINDOW_AUTOSIZE ); /// Create a window for display.
-    //imshow( "Display segmented", mask1 );                /// Show our image inside it.
+    namedWindow( "Display segmented loop", WINDOW_AUTOSIZE ); /// Create a window for display.
+    imshow( "Display segmented loop", mask1 );                /// Show our image inside it.
 
-    /// matrix methode !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+
+
+    /// matrix methode
+
+    mask2 = (RED>95) & (GREEN>40) & (BLUE>20) & ((max(RED,max(GREEN,BLUE)) - min(RED,min(GREEN,BLUE)))>15) & (abs(RED-GREEN)>15) & (RED>GREEN) & (RED>BLUE);
+
+    mask2 = mask2 * 255; ///masker bestaat nu uit 1 of 0. maal 255 doen om duidelijk verschil te zien
+
+
+    namedWindow( "Display segmented matrix", WINDOW_AUTOSIZE ); /// Create a window for display.
+    imshow( "Display segmented matrix", mask2 );                /// Show our image inside it.
 
 
     ///Segmenteer deze kanalen en combineer tot een 3 channel beeld
 
-    ///Mat finaal(Image1.rows, Image1.cols, CV_8UC3);
+    Mat finaal(Image1.rows, Image1.cols, CV_8UC3);
+
+    Mat Seg_Red = RED & mask2;
+    Mat Seg_Green = GREEN & mask2;
+    Mat Seg_Blue = BLUE & mask2;
 
 
+    vector<Mat> combination;
+    combination.push_back(Seg_Red);
+    combination.push_back(Seg_Green);
+    combination.push_back(Seg_Blue);
+    merge(combination, finaal);
+    imshow("segmenteer en comibineer", finaal);
 
 
-
-
-
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 
     ///kasticket
 
     Mat maskAA;
     threshold(Image2,maskAA,0,255,THRESH_OTSU | THRESH_BINARY);
-    imshow("maskAA",maskAA);
-
+    imshow("OTSU",maskAA);
+    // probleem: groot deel van ons ticket is niet meer zichtbaar
 
     /// Histogram equalization
 
-    Mat equalized;
     Mat maskA;
-    equalizeHist(Image2, equalized);
-    imshow("equalized", equalized);
-    threshold(Image2,maskA,0,255,THRESH_OTSU | THRESH_BINARY);
-    imshow("maskA",maskA);
+    equalizeHist(Image2.clone(), maskA);
+    imshow("equalized", maskA);
+    threshold(maskA,maskAA,0,255,THRESH_OTSU | THRESH_BINARY);
+    imshow("uqualized en otsu",maskAA);
 
     /// CLAHE
     Mat result_clahe;
-    Ptr<>
+     Ptr<CLAHE> clahe_pointer = createCLAHE();
+    clahe_pointer->setTilesGridSize(Size(15,15));
+    clahe_pointer->setClipLimit(1);
+    clahe_pointer->apply(Image2.clone(), result_clahe);
+    threshold(result_clahe, maskAA, 0, 255, THRESH_BINARY | THRESH_OTSU);
+    imshow("CLAHE ", maskAA);
 
-    waitKey(0);                                     /// Wait for a keystroke in the window
+    waitKey(0);
 
     return 0;
 }
