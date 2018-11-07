@@ -7,7 +7,7 @@ using namespace cv;
 
 int main(int argc,const char** argv)
 {
-    ///variables
+    ///variabless
     string ImageName1;
     Mat Image1;
     Mat Image2;
@@ -148,9 +148,9 @@ int main(int argc,const char** argv)
 
 
     vector<Mat> combination;
-    combination.push_back(Seg_Red);
-    combination.push_back(Seg_Green);
     combination.push_back(Seg_Blue);
+    combination.push_back(Seg_Green);
+    combination.push_back(Seg_Red);
     merge(combination, finaal);
     imshow("segmenteer en comibineer", finaal);
 
@@ -239,9 +239,9 @@ int main(int argc,const char** argv)
 
 
     vector<Mat> combination2;
-    combination2.push_back(Seg_Red2);
-    combination2.push_back(Seg_Green2);
     combination2.push_back(Seg_Blue2);
+    combination2.push_back(Seg_Green2);
+    combination2.push_back(Seg_Red2);
     merge(combination2, finaal2);
     imshow("segmenteer en comibineer 2", finaal2);
 
