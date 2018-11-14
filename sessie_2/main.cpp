@@ -6,7 +6,25 @@ using namespace cv;
 
 
 void segmenteer_bgr(Mat image);
-void segmenteer_hsv(Mat image);
+Mat segmenteer_hsv(Mat image);
+void component_analyse(Mat image);
+
+static void on_trackbar( int, void* )
+{
+
+}
+
+
+
+
+int hue_min_slider = 160;
+int hue_max_slider = 180;
+
+int saturation_min_slider = 150;
+int saturation_max_slider = 250;
+
+int value_min_slider = 150;
+int value_max_slider = 250;
 
 int main(int argc,const char** argv)
 {
@@ -15,6 +33,7 @@ int main(int argc,const char** argv)
     Mat Image1;
     Mat Image2;
     Mat Image3;
+    char stop;
 
 
     ///Adding a little help option and command line parser input
@@ -75,9 +94,36 @@ int main(int argc,const char** argv)
 
     ///opdracht 2: Segmenteer de verkeersborden in de HSV kleurenruimte
 
-    segmenteer_hsv(Image1);
+    //segmenteer_hsv(Image1);
 
-    waitKey(0);
+    ///Opdracht 3: Gebruik connected component analyse om enkel het stopbord over te houden (zie sessie_1)
+
+//component_analyse(Image1);
+
+    ///Opdracht 4: Gebruik een trackbar om de optimale threshold waardes te bepalen
+    //https://docs.opencv.org/3.4.0/da/d6a/tutorial_trackbar.html
+
+    namedWindow("thresholds", WINDOW_AUTOSIZE); // Create Window
+    createTrackbar( "HUE minimum", "thresholds", &hue_min_slider, 180, on_trackbar );
+    createTrackbar( "HUE maximum", "thresholds", &hue_max_slider, 180, on_trackbar );
+    createTrackbar( "Saturation minimum", "thresholds", &saturation_min_slider, 255, on_trackbar );
+    createTrackbar( "Saturation maximum", "thresholds", &saturation_max_slider, 255, on_trackbar );
+    createTrackbar( "value minimimum", "thresholds", &value_min_slider, 255, on_trackbar );
+    createTrackbar( "value maximum", "thresholds", &value_max_slider, 255, on_trackbar );
+    imshow( "thresholds",Image1);
+
+    while (true)
+    {
+
+        component_analyse(Image1);
+        imshow( "thresholds",segmenteer_hsv(Image1));
+        stop = (char) waitKey(30);
+        if (stop == 'q')
+        {
+            break;
+        }
+    }
+
     return 0;
 }
 
@@ -113,7 +159,7 @@ void segmenteer_bgr(Mat image)
     return;
 }
 
-void segmenteer_hsv(Mat image)
+Mat segmenteer_hsv(Mat image)
 {
 
 
@@ -132,18 +178,109 @@ void segmenteer_hsv(Mat image)
 
     // threshold tussen welke laten zien en welken niet
 
-    int hue_low=165;
+    int hue_low= hue_min_slider;
+    int saturation_low = saturation_min_slider;
+    int value_low = value_min_slider;
+
+    int hue_high = hue_max_slider;
+    int saturation_high = saturation_max_slider;
+    int value_high = value_max_slider;
+/*
+    int hue_low=0;
     int saturation_low = 115;
-    int value_low = 115;
+    int value_low = 145;
 
     int hue_high = 180;
     int saturation_high = 255;
     int value_high = 255;
+*/
 
     Mat finaal(image.rows, image.cols, CV_8UC3);
     inRange(image_hsv, Scalar(hue_low, saturation_low, value_low), Scalar(hue_high, saturation_high, value_high), finaal);
 
     imshow("segmenteer threshold HSV", finaal);
+
+
+
+    return finaal;
+}
+
+
+void component_analyse(Mat image)
+{
+
+
+
+    //afbeelding omzetten naar HSV
+    Mat image_hsv;
+    cvtColor(image, image_hsv, CV_BGR2HSV);
+    imshow("image in HSV domein", image_hsv);
+
+/*    // H, S en V splitsen
+    Mat gesplitst[3];
+    split(image,gesplitst);
+    Mat V = gesplitst[2];
+    Mat S = gesplitst[1];
+    Mat H = gesplitst[0];
+*/
+
+    // threshold tussen welke laten zien en welken niet
+
+    int hue_low= hue_min_slider;
+    int saturation_low = saturation_min_slider;
+    int value_low = value_min_slider;
+
+    int hue_high = hue_max_slider;
+    int saturation_high = saturation_max_slider;
+    int value_high = value_max_slider;
+/*
+    int hue_low=0;
+    int saturation_low = 115;
+    int value_low = 145;
+
+    int hue_high = 180;
+    int saturation_high = 255;
+    int value_high = 255;
+*/
+
+    Mat finaal(image.rows, image.cols, CV_8UC3);
+    inRange(image_hsv, Scalar(hue_low, saturation_low, value_low), Scalar(hue_high, saturation_high, value_high), finaal);
+
+    imshow("segmenteer threshold HSV", finaal);
+
+
+///zelfde doen als sessie 1
+
+    //Closing
+
+    dilate(finaal, finaal, Mat(), Point(-1,-1), 5);
+    erode(finaal, finaal, Mat(), Point(-1,-1), 5);
+    imshow("closing", finaal);
+
+
+        ///contours en hulls
+
+    vector< vector<Point>> contours;
+    findContours(finaal.clone(), contours,  RETR_EXTERNAL, CHAIN_APPROX_NONE);
+    vector< vector<Point>> hulls;
+
+    for(size_t i=0; i<contours.size(); i++)
+    {
+        vector<Point> hull;
+        convexHull(contours[i], hull);
+        hulls.push_back(hull);
+    }
+
+    drawContours(finaal, hulls, -1, 255, -1);
+    imshow("contours", finaal);
+
+    ///samenvoegen afbeelding met masker over
+
+    Mat totaal;
+    totaal = Mat::zeros(image.rows, image.cols, CV_8UC3);
+    image.copyTo(totaal,finaal);
+    imshow("totaal", totaal);
+
 
     return;
 }
