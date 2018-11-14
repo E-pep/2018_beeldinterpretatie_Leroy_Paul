@@ -75,6 +75,8 @@ int main(int argc,const char** argv)
 
     ///opdracht 2: Segmenteer de verkeersborden in de HSV kleurenruimte
 
+    segmenteer_hsv(Image1);
+
     waitKey(0);
     return 0;
 }
@@ -99,13 +101,14 @@ void segmenteer_bgr(Mat image)
     Mat Seg_Green = GREEN & mask;
     Mat Seg_Blue = BLUE & mask;
 
+    //vector maken om kleuren in samen te voegen
 
     vector<Mat> combination;
     combination.push_back(Seg_Blue);
     combination.push_back(Seg_Green);
     combination.push_back(Seg_Red);
     merge(combination, finaal);
-    imshow("segmenteer en comibineer", finaal);
+    imshow("segmenteer en comibineer bgr", finaal);
 
     return;
 }
@@ -114,4 +117,33 @@ void segmenteer_hsv(Mat image)
 {
 
 
+    //afbeelding omzetten naar HSV
+    Mat image_hsv;
+    cvtColor(image, image_hsv, CV_BGR2HSV);
+    imshow("image in HSV domein", image_hsv);
+
+/*    // H, S en V splitsen
+    Mat gesplitst[3];
+    split(image,gesplitst);
+    Mat V = gesplitst[2];
+    Mat S = gesplitst[1];
+    Mat H = gesplitst[0];
+*/
+
+    // threshold tussen welke laten zien en welken niet
+
+    int hue_low=165;
+    int saturation_low = 115;
+    int value_low = 115;
+
+    int hue_high = 180;
+    int saturation_high = 255;
+    int value_high = 255;
+
+    Mat finaal(image.rows, image.cols, CV_8UC3);
+    inRange(image_hsv, Scalar(hue_low, saturation_low, value_low), Scalar(hue_high, saturation_high, value_high), finaal);
+
+    imshow("segmenteer threshold HSV", finaal);
+
+    return;
 }
