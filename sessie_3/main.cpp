@@ -75,7 +75,7 @@ int main(int argc,const char** argv)
     //imshow("template", Image_template);
 
 
-/*
+
     ///opdracht 1:Gebruik template matching om een object te vinden in een inputbeeld
 
     ///template matching toepassen
@@ -103,38 +103,39 @@ int main(int argc,const char** argv)
     rectangle( Image_result, matchLoc, Point( matchLoc.x + Image_template.cols , matchLoc.y + Image_template.rows ), Scalar::all(0), 2, 8, 0 );
     imshow( "image", img_display );
     imshow( "result", Image_result );
- */
+
+
+
+
     ///opdracht 2: Pas de template matching aan om lokaal naar maxima te zoeken, zodanig dat je alle matches vind
 
 
-    ///template matching toepassen
+    ///template matching
 
-    matchTemplate( Image1, Image_template, Image_result, TM_CCORR);
+    Mat Image_result2;
+
+
+    matchTemplate( Image1, Image_template, Image_result2, TM_CCORR_NORMED);
 
     ///normaliseren van resultaat
 
-    normalize( Image_result, Image_result, 0, 1, NORM_MINMAX, -1, Mat());
-    threshold(Image_result,Image_result,0.6,1,3);
+    normalize( Image_result2, Image_result2, 0, 1, NORM_MINMAX, -1, Mat());
+    threshold(Image_result2,Image_result2,0.8,1,3);
 
     ///waarde maxima nemen, SQDIFF geeft minimum terug
-    Image_result = 1- Image_result;
+    Image_result2 = 1- Image_result2;
 
-    Mat img_display = Image1.clone();
-    double minVal; double maxVal; Point minLoc; Point maxLoc;
-    Point matchLoc;
+    Mat img_display2 = Image1.clone();
+
     matchLoc = minLoc;
-    minMaxLoc( Image_result, &minVal, &maxVal, &minLoc, &maxLoc, Mat() );
+    minMaxLoc( Image_result2, &minVal, &maxVal, &minLoc, &maxLoc, Mat() );
 
 
-    for(int i = 0 ; i < Image1.rows; i++)
-    {
-        for(int j = 0; j < Image1.cols; j++)
-        {
 
-        }
-    }
-    imshow( "image", img_display );
-    imshow( "result", Image_result );
+
+
+    imshow( "image2", img_display2 );
+    imshow( "result2", Image_result2 );
 
 
     waitKey(0);
