@@ -100,7 +100,6 @@ int main(int argc,const char** argv)
     Mat img_display = Image1.clone();
 
     rectangle( img_display, matchLoc, Point( matchLoc.x + Image_template.cols , matchLoc.y + Image_template.rows ), Scalar::all(0), 2, 8, 0 );
-    rectangle( Image_result, matchLoc, Point( matchLoc.x + Image_template.cols , matchLoc.y + Image_template.rows ), Scalar::all(0), 2, 8, 0 );
     imshow( "image", img_display );
     imshow( "result", Image_result );
 
@@ -110,32 +109,60 @@ int main(int argc,const char** argv)
     ///opdracht 2: Pas de template matching aan om lokaal naar maxima te zoeken, zodanig dat je alle matches vind
 
 
-    ///template matching
+
+
+
+    //template matching
 
     Mat Image_result2;
 
 
+    // originele afbeelding om op te tekenen
+
+    Mat finaal2;
+    Image1.copyTo(finaal2);
+
     matchTemplate( Image1, Image_template, Image_result2, TM_CCORR_NORMED);
 
-    ///normaliseren van resultaat
+    //normaliseren van resultaat
 
     normalize( Image_result2, Image_result2, 0, 1, NORM_MINMAX, -1, Mat());
-    threshold(Image_result2,Image_result2,0.8,1,3);
+
+    /// threshold binary inverted
+
+    threshold(Image_result2,Image_result2,0.8,1,1);
 
     ///waarde maxima nemen, SQDIFF geeft minimum terug
     Image_result2 = 1- Image_result2;
 
     Mat img_display2 = Image1.clone();
 
-    matchLoc = minLoc;
-    minMaxLoc( Image_result2, &minVal, &maxVal, &minLoc, &maxLoc, Mat() );
 
 
+    ///omzetten naar CV_8UC1 voor findcontours functie *255 om 1 om te zetten naar 255
+
+    Image_result2.convertTo(Image_result2,CV_8UC1);
+    Image_result2 = Image_result2*255;
+    imshow( "result2", Image_result2 );
+    ///contours en hulls
+
+    vector< vector<Point>> contours;
+    findContours(Image_result2.clone(), contours,  RETR_EXTERNAL, CHAIN_APPROX_NONE);
+    vector< vector<Point>> hulls;
+
+    for(size_t i=0; i<contours.size(); i++)
+    {
+        Rect region = boundingRect(contours[i]);
+        Mat temp = Image_result2(region);
+        Point maxLoc;
+        minMaxLoc( temp, NULL, NULL, &minLoc, NULL);
+        rectangle(finaal2,Point(region.x + minLoc.x, region.y + minLoc.y), Point(minLoc.x +region.x + temp.cols, region.y + minLoc.y + temp.rows), Scalar::all(0), 2, 8, 0 );
+    }
 
 
 
     imshow( "image2", img_display2 );
-    imshow( "result2", Image_result2 );
+    imshow("finaal2",finaal2);
 
 
     waitKey(0);
@@ -143,9 +170,4 @@ int main(int argc,const char** argv)
     return 0;
 }
 
-
-void MatchingMethod( int, void* )
-{
-
-}
 
