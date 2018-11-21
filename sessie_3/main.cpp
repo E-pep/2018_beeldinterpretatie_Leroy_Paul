@@ -154,9 +154,9 @@ int main(int argc,const char** argv)
     {
         Rect region = boundingRect(contours[i]);
         Mat temp = Image_result2(region);
-        Point maxLoc;
-        minMaxLoc( temp, NULL, NULL, &minLoc, NULL);
-        rectangle(finaal2,Point(region.x + minLoc.x, region.y + minLoc.y), Point(minLoc.x +region.x + temp.cols, region.y + minLoc.y + temp.rows), Scalar::all(0), 2, 8, 0 );
+        imshow("temp",temp);
+        minMaxLoc( temp, NULL, NULL, NULL, &maxLoc);
+        rectangle(finaal2,Point(region.x + maxLoc.x, region.y + maxLoc.y), Point(maxLoc.x +region.x + Image_template.cols, region.y + maxLoc.y + Image_template.rows), Scalar::all(0), 2, 8, 0 );
     }
 
 
@@ -169,5 +169,6 @@ int main(int argc,const char** argv)
 
     return 0;
 }
+
 
 
