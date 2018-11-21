@@ -10,6 +10,12 @@
 using namespace std;
 using namespace cv;
 
+void rotate(Mat& src, double angle, Mat& dst)
+{
+    Point2f pt(src.cols/2., src.rows/2.);
+    Mat r = getRotationMatrix2D(pt, angle, 1.0);
+    warpAffine(src, dst, r, cv::Size(src.cols, src.rows));
+}
 
 int main(int argc,const char** argv)
 {
@@ -17,14 +23,14 @@ int main(int argc,const char** argv)
     Mat Image1;
     Mat Image_template;
     Mat Image_result;
-
+    Mat Image_rotated;
 
     ///Adding a little help option and command line parser input
     CommandLineParser parser(argc,argv,
         "{help h|  |show this message}"
         "{image_1  im1|  |(required)}"
         "{image_template  im_temp|  |(required)}"
-     //   "{image_3  im3|  |(required)}"
+        "{image_rotated  im2|  |(required)}"
      //   "{image_4  im4|  |(required)}"
     );
 
@@ -54,6 +60,14 @@ int main(int argc,const char** argv)
         return -1;
     }
 
+    string image_3(parser.get<string>("image_rotated"));
+    if(image_2.empty())
+    {
+        cout << "argument niet gevonden" << endl;
+        parser.printMessage();
+        return -1;
+    }
+
 
 
 
@@ -61,6 +75,7 @@ int main(int argc,const char** argv)
 
    Image1 = imread(image_1, IMREAD_COLOR);
    Image_template = imread(image_2, IMREAD_COLOR);
+   Image_rotated = imread(image_3, IMREAD_COLOR);
 
     if( Image1.empty() )                      /// Check for invalid input
     {
@@ -78,7 +93,7 @@ int main(int argc,const char** argv)
 
     ///opdracht 1:Gebruik template matching om een object te vinden in een inputbeeld
 
-    ///template matching toepassen
+    ///template matching toepassen zonder masker
 
     matchTemplate( Image1.clone(), Image_template, Image_result, TM_CCOEFF_NORMED);
 
@@ -87,10 +102,11 @@ int main(int argc,const char** argv)
     normalize( Image_result, Image_result, 0, 1, NORM_MINMAX, -1, Mat() );
 
 
-    ///waarde maxima nemen, SQDIFF geeft minimum terug
+    ///waarde maxima nemen, geeft minimum terug
     Image_result = 1- Image_result;
 
 
+    ///minima en maxima localiseren
     double minVal; double maxVal; Point minLoc; Point maxLoc;
     Point matchLoc;
     minMaxLoc( Image_result, &minVal, &maxVal, &minLoc, &maxLoc, Mat() );
@@ -98,7 +114,7 @@ int main(int argc,const char** argv)
     matchLoc = minLoc;
 
     Mat img_display = Image1.clone();
-
+    /// rechthoek tekenen rond gevonden matches
     rectangle( img_display, matchLoc, Point( matchLoc.x + Image_template.cols , matchLoc.y + Image_template.rows ), Scalar::all(0), 2, 8, 0 );
     imshow( "image", img_display );
     imshow( "result", Image_result );
@@ -144,17 +160,22 @@ int main(int argc,const char** argv)
     Image_result2.convertTo(Image_result2,CV_8UC1);
     Image_result2 = Image_result2*255;
     imshow( "result2", Image_result2 );
+
+
     ///contours en hulls
+
 
     vector< vector<Point>> contours;
     findContours(Image_result2.clone(), contours,  RETR_EXTERNAL, CHAIN_APPROX_NONE);
     vector< vector<Point>> hulls;
 
+    /// rond elk gevonden match een rechthoek tekenen
     for(size_t i=0; i<contours.size(); i++)
     {
         Rect region = boundingRect(contours[i]);
         Mat temp = Image_result2(region);
         imshow("temp",temp);
+        ///minima en maxima localiseren
         minMaxLoc( temp, NULL, NULL, NULL, &maxLoc);
         rectangle(finaal2,Point(region.x + maxLoc.x, region.y + maxLoc.y), Point(maxLoc.x +region.x + Image_template.cols, region.y + maxLoc.y + Image_template.rows), Scalar::all(0), 2, 8, 0 );
     }
@@ -165,6 +186,36 @@ int main(int argc,const char** argv)
     imshow("finaal2",finaal2);
 
 
+
+
+    ///Extra: Pas de template matching aan geroteerde objecten te vinden (roteren van beeld, rotatedRect, warpPerspective op hoekpunten)
+/*
+    vector<Mat> rotated_images;
+    Mat rotated;
+
+    // originele afbeelding om op te tekenen
+
+    Mat finaal3;
+    Image_rotated.copyTo(finaal3);
+
+
+    // vector maken gevuld met originele afbeelding geroteerd
+    for(int i = 0; i < 360; i++)
+    {
+	rotated = Image_rotated.clone();
+	cvtColor(rotated, rotated, CV_BGR2GRAY);
+	equalizeHist( rotated, rotated );
+    rotate(Image_rotated, (i+1), rotated);
+	rotated_images.push_back(rotated);
+    }
+
+    vector< vector<Rect> > detections;
+
+    for (int i = 0; i < (int)rotated_images.size(); i++){
+        vector<Rect> objects;
+        detections.push_back(objects);
+    }
+*/
     waitKey(0);
 
     return 0;
