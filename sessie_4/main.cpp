@@ -190,6 +190,11 @@ int main(int argc,const char** argv)
      { good_matches.push_back( matches[i]); }
   }
 
+    Mat img_matches2;
+  drawMatches( Image1, keypoints_1_ORB, Image1_object, keypoints_2_ORB,
+               good_matches, img_matches2, Scalar::all(-1), Scalar::all(-1),
+               std::vector<char>(), DrawMatchesFlags::NOT_DRAW_SINGLE_POINTS );
+
   //-- Localize the object
   vector<Point2f> localize1;
   vector<Point2f> localize2;
@@ -201,7 +206,7 @@ int main(int argc,const char** argv)
     localize2.push_back( keypoints_2_ORB[ good_matches[i].trainIdx ].pt );
   }
 
-    Mat H = findHomography(localize1, localize2, RANSAC );
+    Mat H = findHomography(localize2, localize1, RANSAC );
 
 
     //-- Get the corners from the image of the object to be "detected" )
@@ -217,13 +222,14 @@ int main(int argc,const char** argv)
     perspectiveTransform( obj_corners, scene_corners, H);
 
     cout << scene_corners << endl;
+    cout << obj_corners << endl;
     //-- Draw lines between the corners (the mapped object in the scene - image_2 )
-    line( img_matches, scene_corners[0] + Point2f( Image1_object.cols, 0), scene_corners[1] + Point2f( Image1_object.cols, 0), Scalar(0, 255, 0), 4 );
-    line( img_matches, scene_corners[1] + Point2f( Image1_object.cols, 0), scene_corners[2] + Point2f( Image1_object.cols, 0), Scalar( 0, 255, 0), 4 );
-    line( img_matches, scene_corners[2] + Point2f( Image1_object.cols, 0), scene_corners[3] + Point2f( Image1_object.cols, 0), Scalar( 0, 255, 0), 4 );
-    line( img_matches, scene_corners[3] + Point2f( Image1_object.cols, 0), scene_corners[0] + Point2f( Image1_object.cols, 0), Scalar( 0, 255, 0), 4 );
+    line( img_matches2, scene_corners[0] + Point2f( Image1_object.cols, 0), scene_corners[1] + Point2f( Image1_object.cols, 0), Scalar(0, 255, 0), 4 );
+    line( img_matches2, scene_corners[1] + Point2f( Image1_object.cols, 0), scene_corners[2] + Point2f( Image1_object.cols, 0), Scalar( 0, 255, 0), 4 );
+    line( img_matches2, scene_corners[2] + Point2f( Image1_object.cols, 0), scene_corners[3] + Point2f( Image1_object.cols, 0), Scalar( 0, 255, 0), 4 );
+    line( img_matches2, scene_corners[3] + Point2f( Image1_object.cols, 0), scene_corners[0] + Point2f( Image1_object.cols, 0), Scalar( 0, 255, 0), 4 );
     //-- Show detected matches
-    imshow( "RANSAC homography", img_matches );
+    imshow( "RANSAC homography", img_matches2 );
 
     waitKey(0);
 
