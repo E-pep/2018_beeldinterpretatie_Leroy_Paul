@@ -226,6 +226,7 @@ int main(int argc,const char** argv)
 
   perspectiveTransform( obj_corners, scene_corners, H);
 
+  cout << good_matches.size() << endl;
   cout << obj_corners << endl;
   cout << scene_corners << endl;
 

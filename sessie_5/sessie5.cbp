@@ -2,16 +2,16 @@
 <CodeBlocks_project_file>
 	<FileVersion major="1" minor="6" />
 	<Project>
-		<Option title="sessie_4" />
+		<Option title="sessie5" />
 		<Option pch_mode="2" />
 		<Option compiler="gcc" />
 		<Build>
 			<Target title="Debug">
-				<Option output="bin/Debug/sessie_4" prefix_auto="1" extension_auto="1" />
+				<Option output="bin/Debug/sessie5" prefix_auto="1" extension_auto="1" />
 				<Option object_output="obj/Debug/" />
 				<Option type="1" />
 				<Option compiler="gcc" />
-				<Option parameters='-im1=&quot;test2.png&quot;  -im2=&quot;test.png&quot;' />
+				<Option parameters='-if=&quot;strawberry1.tif&quot;' />
 				<Compiler>
 					<Add option="-g" />
 				</Compiler>
@@ -20,7 +20,7 @@
 				</Linker>
 			</Target>
 			<Target title="Release">
-				<Option output="bin/Release/sessie_4" prefix_auto="1" extension_auto="1" />
+				<Option output="bin/Release/sessie5" prefix_auto="1" extension_auto="1" />
 				<Option object_output="obj/Release/" />
 				<Option type="1" />
 				<Option compiler="gcc" />
