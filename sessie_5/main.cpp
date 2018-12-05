@@ -3,6 +3,7 @@
 
 using namespace std;
 using namespace cv;
+using namespace cv::ml;
 
 
 Mat Image1;
@@ -136,12 +137,22 @@ int main(int argc,const char** argv)
 
     for(int i = 0; i< punten.size(); i++)
     {
-        TrainingDataForeground.at<float>(i,0) = H.at<float>(punten[i]);
-        TrainingDataForeground.at<float>(i,1) = S.at<float>(punten[i]);
-        TrainingDataForeground.at<float>(i,2)= V.at<float>(punten[i]);
+        TrainingDataForeground.at<float>(i,0) = H.at<uchar>(punten[i]);
+        TrainingDataForeground.at<float>(i,1) = S.at<uchar>(punten[i]);
+        TrainingDataForeground.at<float>(i,2)= V.at<uchar>(punten[i]);
     }
 
     cout << "einde foreground" << endl;
+    cout << "TrainingDataforeground:" << endl;
+
+    for(int k = 0; k < TrainingDataForeground.cols; k++)
+    {
+          for(int l = 0; l < TrainingDataForeground.rows; l++)
+            {
+                cout << "trainingdataforeground" << (int) TrainingDataForeground.at<float>(k,l) << endl;
+            }
+    }
+
     //nu voor achtergrond
 
 
@@ -152,11 +163,11 @@ int main(int argc,const char** argv)
 
     for(int i = 0; i< punten_background.size(); i++)
     {
-        TrainingDataBackground.at<float>(i,0) = H.at<float>(punten_background[i]);
-        TrainingDataBackground.at<float>(i,1) = S.at<float>(punten_background[i]);
-        TrainingDataBackground.at<float>(i,2)= V.at<float>(punten_background[i]);
+        TrainingDataBackground.at<float>(i,0) = H.at<uchar>(punten_background[i]);
+        TrainingDataBackground.at<float>(i,1) = S.at<uchar>(punten_background[i]);
+        TrainingDataBackground.at<float>(i,2)= V.at<uchar>(punten_background[i]);
     }
-
+    cout << "einde background" << endl;
     //volledige data
 
     Mat TrainingData;
@@ -165,14 +176,74 @@ int main(int argc,const char** argv)
     vconcat(TrainingDataForeground,TrainingDataBackground, TrainingData);
     vconcat(labels_fg, labels_bg, labels);
 
-    cout << "trainingsdata:" << TrainingData << endl;
-    cout << "labels:" << labels << endl;
+    cout << "einde samenvoegen" << labels << endl;
+    cout << "labels" <<labels << endl;
+
+    for(int k = 0; k < TrainingData.cols; k++)
+    {
+          for(int l = 0; l < TrainingData.rows; l++)
+            {
+                cout << "trainingdata" << (int) TrainingData.at<float>(k,l) << endl;
+            }
+    }
+
 
     ///opdracht 3 Train met deze data een K-Nearest-Neighbor classifier, een Normal Bayes Classifier en een Support Vector Machine
 
-    //knn classifier
+    //K-Nearest-Neighbor classifier
+
+    Ptr<KNearest> knn = KNearest::create();
+    Ptr<TrainData>  TrainingData_knn = TrainData::create(TrainingData,ROW_SAMPLE, labels);
+    knn->setIsClassifier(true);
+    knn->setAlgorithmType(KNearest::BRUTE_FORCE);
+    knn->setDefaultK(3);
+    knn->train(TrainingData_knn);
+
+    //Normal Bayes Classifier
+    Ptr<NormalBayesClassifier> normalbayes = NormalBayesClassifier::create();
+    normalbayes->train(TrainingData, ROW_SAMPLE, labels);
+
+    //Support Vector Machine
+
+    cout << "einde trainen classifiers" << labels << endl;
+    ///Opdracht 4: Classificeer de pixels van de afbeelding met deze technieken en visualiseer met een masker de resterende pixels.
 
 
+    Mat mask_knn = Mat::zeros(Image1.rows, Image1.cols, CV_8UC1);
+    Mat mask_normalbayes = Mat::zeros(Image1.rows, Image1.cols, CV_8UC1);
+    Mat labels_knn;
+    Mat labels_normalbayes;
+    Mat data_bins(1,3,CV_32FC1);
+    Vec3b pixel;
+
+    for( int i = 0; i < Image1.rows; i++ ){
+        for( int j = 0; j < Image1.cols; j++ ){
+
+            //huidige waarden
+            data_bins.at<float>(0,0) = H.at<uchar>(i,j);
+            data_bins.at<float>(0,1) = S.at<uchar>(i,j);
+            data_bins.at<float>(0,2) = V.at<uchar>(i,j);
+
+
+            knn->findNearest(data_bins, knn->getDefaultK(), labels_knn);
+            normalbayes->predict(data_bins, labels_normalbayes);
+
+
+            mask_knn.at<uchar>(i,j) = labels_knn.at<float>(0,0);
+            mask_normalbayes.at<uchar>(i,j) = labels_normalbayes.at<float>(0,0);
+
+
+        }
+    }
+
+
+    // maskers  1*255 voor duidelijk verschil
+    mask_knn *= 255;
+    mask_normalbayes *=255;
+    // resultaat laten zien
+
+    imshow("masker knn", mask_knn);
+    imshow("masker bayes", mask_normalbayes);
     waitKey(0);
     return 0;
 }
