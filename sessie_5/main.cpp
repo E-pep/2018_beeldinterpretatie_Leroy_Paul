@@ -125,7 +125,7 @@ int main(int argc,const char** argv)
     //prepare foreground training data
 
     Mat TrainingDataForeground(punten.size(),3, CV_32FC1);
-    Mat labels_fg = Mat::ones(punten.size(),1, CV_32FC1);
+    Mat labels_fg = Mat::ones(punten.size(),1, CV_32SC1);
     Mat gesplitst[3];
     split(image_HSV,gesplitst);
 
@@ -137,9 +137,9 @@ int main(int argc,const char** argv)
 
     for(int i = 0; i< punten.size(); i++)
     {
-        TrainingDataForeground.at<float>(i,0) = H.at<uchar>(punten[i]);
-        TrainingDataForeground.at<float>(i,1) = S.at<uchar>(punten[i]);
-        TrainingDataForeground.at<float>(i,2)= V.at<uchar>(punten[i]);
+        TrainingDataForeground.at<float>(i,0) = (float)(H.at<uchar>(punten[i]));
+        TrainingDataForeground.at<float>(i,1) = (float)(S.at<uchar>(punten[i]));
+        TrainingDataForeground.at<float>(i,2)= (float)(V.at<uchar>(punten[i]));
     }
 
     cout << "einde foreground" << endl;
@@ -156,16 +156,16 @@ int main(int argc,const char** argv)
     //nu voor achtergrond
 
 
-    Mat TrainingDataBackground(punten.size(),3, CV_32FC1);
-    Mat labels_bg = Mat::zeros(punten.size(),1, CV_32FC1);
+    Mat TrainingDataBackground(punten_background.size(),3, CV_32FC1);
+    Mat labels_bg = Mat::zeros(punten_background.size(),1, CV_32SC1);
 
 
 
     for(int i = 0; i< punten_background.size(); i++)
     {
-        TrainingDataBackground.at<float>(i,0) = H.at<uchar>(punten_background[i]);
-        TrainingDataBackground.at<float>(i,1) = S.at<uchar>(punten_background[i]);
-        TrainingDataBackground.at<float>(i,2)= V.at<uchar>(punten_background[i]);
+        TrainingDataBackground.at<float>(i,0) = (float)(H.at<uchar>(punten_background[i]));
+        TrainingDataBackground.at<float>(i,1) = (float)(S.at<uchar>(punten_background[i]));
+        TrainingDataBackground.at<float>(i,2)=  (float)(V.at<uchar>(punten_background[i]));
     }
     cout << "einde background" << endl;
     //volledige data
@@ -176,7 +176,7 @@ int main(int argc,const char** argv)
     vconcat(TrainingDataForeground,TrainingDataBackground, TrainingData);
     vconcat(labels_fg, labels_bg, labels);
 
-    cout << "einde samenvoegen" << labels << endl;
+    cout << "einde samenvoegen" << endl;
     cout << "labels" <<labels << endl;
 
     for(int k = 0; k < TrainingData.cols; k++)
@@ -220,9 +220,9 @@ int main(int argc,const char** argv)
         for( int j = 0; j < Image1.cols; j++ ){
 
             //huidige waarden
-            data_bins.at<float>(0,0) = H.at<uchar>(i,j);
-            data_bins.at<float>(0,1) = S.at<uchar>(i,j);
-            data_bins.at<float>(0,2) = V.at<uchar>(i,j);
+            data_bins.at<float>(0,0) = (float)(H.at<uchar>(i,j));
+            data_bins.at<float>(0,1) = (float)(S.at<uchar>(i,j));
+            data_bins.at<float>(0,2) = (float)(V.at<uchar>(i,j));
 
 
             knn->findNearest(data_bins, knn->getDefaultK(), labels_knn);
