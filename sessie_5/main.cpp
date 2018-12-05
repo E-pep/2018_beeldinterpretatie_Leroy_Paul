@@ -4,6 +4,7 @@
 using namespace std;
 using namespace cv;
 
+
 Mat Image1;
 Mat Image_points;
 vector<Point> punten;
@@ -11,7 +12,6 @@ vector<Point> punten_background;
 
 static void callbackMouse1( int event, int x, int y, int flags, void *userdata)
 {
-    cout << "callback1" << endl;
     if( event == EVENT_LBUTTONDOWN )
     {
         punten.push_back(Point(x,y));
@@ -33,7 +33,6 @@ static void callbackMouse1( int event, int x, int y, int flags, void *userdata)
 
 static void callbackMouse2( int event, int x, int y, int flags, void *userdata)
 {
-    cout << "callback2" << endl;
     if( event == EVENT_LBUTTONDOWN )
     {
         punten_background.push_back(Point(x,y));
@@ -103,18 +102,20 @@ int main(int argc,const char** argv)
     }
 
 
-    /// Opdracht:1 interface -------------------------------------------------------------------
+    /// Opdracht:1 Maak een interface waarop je op basis van mouse callbacks pixels kan aanklikken.
+
     imshow("interface", Image1);
 
+    cout << "geef goede punten met aardbei, druk key om door te gaan" << endl;
     setMouseCallback("interface", callbackMouse1,0);
     waitKey();
-
+    cout << "geef background punten" << endl;
     setMouseCallback("interface", callbackMouse2,0);
 
     waitKey();
 
 
-    /// Opdracht:2
+    ///opdracht 2: Op basis van de geselecteerd punten bepaalje een descriptor, in dit geval de HSV representatie van de pixel.
 
     Mat image_HSV;
 
@@ -122,18 +123,54 @@ int main(int argc,const char** argv)
 
     //prepare foreground training data
 
-    Mat TrainingDataForeground(punten,3, CV_32FC1);
-    Mat labels_fg = Mat::ones(punten,1, CV_32FC1);
+    Mat TrainingDataForeground(punten.size(),3, CV_32FC1);
+    Mat labels_fg = Mat::ones(punten.size(),1, CV_32FC1);
+    Mat gesplitst[3];
+    split(image_HSV,gesplitst);
+
+    Mat V = gesplitst[2];
+    Mat S = gesplitst[1];
+    Mat H = gesplitst[0];
+
+
 
     for(int i = 0; i< punten.size(); i++)
     {
-        Vec3b =
-
+        TrainingDataForeground.at<float>(i,0) = H.at<float>(punten[i]);
+        TrainingDataForeground.at<float>(i,1) = S.at<float>(punten[i]);
+        TrainingDataForeground.at<float>(i,2)= V.at<float>(punten[i]);
     }
 
-    ///opdracht 3
+    cout << "einde foreground" << endl;
+    //nu voor achtergrond
 
-    //linear niet gevoelig aan overfitten
+
+    Mat TrainingDataBackground(punten.size(),3, CV_32FC1);
+    Mat labels_bg = Mat::zeros(punten.size(),1, CV_32FC1);
+
+
+
+    for(int i = 0; i< punten_background.size(); i++)
+    {
+        TrainingDataBackground.at<float>(i,0) = H.at<float>(punten_background[i]);
+        TrainingDataBackground.at<float>(i,1) = S.at<float>(punten_background[i]);
+        TrainingDataBackground.at<float>(i,2)= V.at<float>(punten_background[i]);
+    }
+
+    //volledige data
+
+    Mat TrainingData;
+    Mat labels;
+
+    vconcat(TrainingDataForeground,TrainingDataBackground, TrainingData);
+    vconcat(labels_fg, labels_bg, labels);
+
+    cout << "trainingsdata:" << TrainingData << endl;
+    cout << "labels:" << labels << endl;
+
+    ///opdracht 3 Train met deze data een K-Nearest-Neighbor classifier, een Normal Bayes Classifier en een Support Vector Machine
+
+    //knn classifier
 
 
     waitKey(0);
