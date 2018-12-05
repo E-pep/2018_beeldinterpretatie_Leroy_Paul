@@ -205,14 +205,22 @@ int main(int argc,const char** argv)
 
     //Support Vector Machine
 
+    Ptr<SVM> svm = SVM::create();
+    svm->setType(SVM::C_SVC);
+    svm->setKernel(SVM::LINEAR);
+    svm->setTermCriteria(TermCriteria(TermCriteria::MAX_ITER, 100, 1e-6));
+    svm->train(TrainingData, ROW_SAMPLE, labels);
+
     cout << "einde trainen classifiers" << labels << endl;
     ///Opdracht 4: Classificeer de pixels van de afbeelding met deze technieken en visualiseer met een masker de resterende pixels.
 
 
     Mat mask_knn = Mat::zeros(Image1.rows, Image1.cols, CV_8UC1);
     Mat mask_normalbayes = Mat::zeros(Image1.rows, Image1.cols, CV_8UC1);
+    Mat mask_svm = Mat::zeros(Image1.rows, Image1.cols, CV_8UC1);
     Mat labels_knn;
     Mat labels_normalbayes;
+    Mat labels_svm;
     Mat data_bins(1,3,CV_32FC1);
     Vec3b pixel;
 
@@ -227,11 +235,11 @@ int main(int argc,const char** argv)
 
             knn->findNearest(data_bins, knn->getDefaultK(), labels_knn);
             normalbayes->predict(data_bins, labels_normalbayes);
-
+            svm->predict(data_bins, labels_svm);
 
             mask_knn.at<uchar>(i,j) = labels_knn.at<float>(0,0);
-            mask_normalbayes.at<uchar>(i,j) = labels_normalbayes.at<float>(0,0);
-
+            mask_normalbayes.at<uchar>(i,j) = labels_normalbayes.at<int>(0,0);
+            mask_svm.at<uchar>(i,j) = labels_svm.at<float>(0,0);
 
         }
     }
@@ -240,10 +248,12 @@ int main(int argc,const char** argv)
     // maskers  1*255 voor duidelijk verschil
     mask_knn *= 255;
     mask_normalbayes *=255;
+    mask_svm *=255;
     // resultaat laten zien
 
     imshow("masker knn", mask_knn);
     imshow("masker bayes", mask_normalbayes);
+    imshow("masker svm", mask_svm);
     waitKey(0);
     return 0;
 }
