@@ -9,9 +9,10 @@ using namespace cv;
 
 extern Ptr<ORB> orb;
 extern vector<vector<KeyPoint>> kp_FrontPages;
-void readKpFrontPage(Mat image);
+void AdKpFrontPage(Mat image, String nodename);
 void readkpFile(Mat image);
 
+void ReadFPkps();
 
 
 #endif // MAIN_H_INCLUDED

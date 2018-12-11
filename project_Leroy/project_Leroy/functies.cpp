@@ -9,18 +9,21 @@ Ptr<ORB> orb = ORB::create();
 vector<vector<KeyPoint>> kp_FrontPages;
 vector<vector<KeyPoint>> kp_Book1Pages;
 
-void readKpFrontPage(Mat image)
+void AdKpFrontPage(Mat image,String nodename)
 {
     vector<KeyPoint> kp;
     orb->detect( image, kp );
 
     cout << "in readKpFrontPages" << endl;
     FileStorage fs("kp_frontpages.yml", FileStorage::APPEND);
-    write( fs , "kpfrontpage", kp );
+    write( fs , nodename, kp );
 
     fs.release();
     return;
 }
+
+
+
 
 void readkpFile(Mat image)
 {
@@ -28,11 +31,38 @@ void readkpFile(Mat image)
     vector<KeyPoint> kp;
     Mat Imkp;
     FileStorage fs("kp_frontpages.yml", FileStorage::READ);
-    FileNode kptFileNode = fs["kpfrontpage"];
+    FileNode kptFileNode = fs["kpfrontpage1"];
     read( kptFileNode, kp );
+    cout << "kp value" << kp.empty() << endl;
     fs.release();
     drawKeypoints( image, kp, Imkp, Scalar::all(-1), DrawMatchesFlags::DEFAULT );
     imshow("image",Imkp);
     waitKey();
     return;
+}
+
+void ReadFPkps()
+{
+    int i = 1;
+    vector<KeyPoint> temp;
+    string nodename;
+    FileStorage fs("kp_frontpages.yml", FileStorage::READ);
+    while(1)
+    {
+        nodename = "kpfrontpage1" + i;
+        cout << nodename <<endl;
+        FileNode kptFileNode = fs[nodename];
+        cout << kptFileNode.empty()<< endl;
+        if(kptFileNode.empty())
+        {
+            cout << "test" <<endl;
+           fs.release();
+           break;
+        }
+        read(kptFileNode, temp);
+        kp_FrontPages.push_back(temp);
+        i++;
+    }
+  cout << "size:" <<kp_FrontPages.size()<< endl;
+  return;
 }

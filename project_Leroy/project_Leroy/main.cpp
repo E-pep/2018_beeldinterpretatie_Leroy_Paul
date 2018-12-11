@@ -29,10 +29,15 @@ int main(int argc, const char** argv)
     }
 
     cover = imread(bookcover, IMREAD_GRAYSCALE);
-    cout << "test" << endl;
-    //readKpFrontPage(cover);
-    readkpFile(cover);
-    //read out webcam
+
+ ///this is only needed when you want to add new picture keypoints
+
+    ReadFPkps();
+  //  readkpFile(cover);
+
+ ///
+
+
     VideoCapture cap(0);
 
     if(!cap.isOpened())
