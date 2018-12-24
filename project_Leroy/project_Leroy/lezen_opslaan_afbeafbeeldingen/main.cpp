@@ -11,6 +11,7 @@ int main(int argc, const char** argv)
 {
     Mat pagina;
     vector<Mat> images;
+    Mat testimage;
     int teller = 0;
     string paginastring;
     string start = "/pagina";
@@ -18,7 +19,7 @@ int main(int argc, const char** argv)
 
     CommandLineParser parser(argc,argv,
         "{help h|  |show this message}"
-        "{titel  bt|  |(required)}"
+        "{titel  bk|  |(required)}"
      //   "{image_2  im2|  |(required)}"
     //    "{image_rotated  im2|  |(required)}"
      //   "{image_4  im4|  |(required)}"
@@ -32,23 +33,27 @@ int main(int argc, const char** argv)
         parser.printMessage();
         return -1;
     }
-
+    cout << "gevonden titel:" << titel << endl;
 
 
     while(1)
     {
         paginastring = titel+start + to_string(teller) + base;
-        images[teller] = imread(paginastring,IMREAD_GRAYSCALE);
+        cout << "inlezen pagina" <<paginastring << endl;
+        images.push_back(imread(paginastring,IMREAD_GRAYSCALE));
 
         if (images[teller].empty())
         {
-            cout << "boek klaar met inlezen, aantal paginas : "<< teller << endl;
+            images.pop_back();
             break;
         }
 
         teller++;
     }
+    cout << "boek klaar met inlezen, aantal paginas : "<< images.size() << endl;
 
+    Addboek(images, titel);
+    readkpFile(images[0]);
  ///this is only needed when you want to add new picture keypoints
 
 

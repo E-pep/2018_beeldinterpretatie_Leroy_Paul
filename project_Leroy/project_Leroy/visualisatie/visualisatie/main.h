@@ -10,4 +10,6 @@ using namespace cv;
 
 vector<vector<KeyPoint>> LeesKps(string titel);
 
+vector<Mat> LeesDesc(string titel);
+
 #endif // MAIN_H_INCLUDED

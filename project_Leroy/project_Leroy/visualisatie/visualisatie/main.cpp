@@ -42,9 +42,11 @@ int main(int argc, const char** argv)
 
     boek_kp = LeesKps(titel_boek);
 
-    /// descriptor aan toevoegen (compute)
+    /// inlezen van descriptors (compute)
 
-    boek_desc = LeesDesc()
+    boek_desc = LeesDesc(titel_boek);
+
+
 
     return 0;
 }

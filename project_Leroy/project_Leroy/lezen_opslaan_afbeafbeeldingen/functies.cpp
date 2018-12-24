@@ -27,8 +27,8 @@ void Addboek(vector<Mat> images, String titel)
     fs1string = titel + base1;
     fs2string = titel + base2;
 
-    FileStorage fs(fs1string, FileStorage::APPEND);
-    FileStorage fs2(fs2string, FileStorage::APPEND);
+    FileStorage fs(fs1string, FileStorage::WRITE);
+    FileStorage fs2(fs2string, FileStorage::WRITE);
 
     for(int i = 0; i< images.size(); i++)
     {
@@ -53,8 +53,8 @@ void readkpFile(Mat image)
     cout << "in readkpFile" << endl;
     vector<KeyPoint> kp;
     Mat Imkp;
-    FileStorage fs("kp_frontpages.yml", FileStorage::READ);
-    FileNode kptFileNode = fs["kpfrontpage1"];
+    FileStorage fs("dierenboek_kp.yml", FileStorage::READ);
+    FileNode kptFileNode = fs["pagina0"];
     read( kptFileNode, kp );
     cout << "kp value" << kp.empty() << endl;
     fs.release();

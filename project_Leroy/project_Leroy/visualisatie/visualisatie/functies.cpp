@@ -11,12 +11,12 @@ vector<vector<KeyPoint>> kp;
 
 vector<vector<KeyPoint>> LeesKps(string titel)
 {
-    int i = 1;
+    int i = 0;
 
     //string van file
     string filename;
     string fileend = ".yml";
-    filename = titel + fileend;
+    filename = titel+ "_kp"+ fileend;
 
     //string nodes in file
     vector<KeyPoint> temp;
@@ -33,7 +33,7 @@ vector<vector<KeyPoint>> LeesKps(string titel)
         cout << kptFileNode.empty()<< endl;
         if(kptFileNode.empty())
         {
-            cout << "test" <<endl;
+           kp.pop_back();
            fs.release();
            break;
         }
