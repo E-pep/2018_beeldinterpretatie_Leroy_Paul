@@ -54,12 +54,6 @@ int main(int argc, const char** argv)
 
     Addboek(images, titel);
     readkpFile(images[0]);
- ///this is only needed when you want to add new picture keypoints
-
-
-  //  readkpFile(cover);
-
- ///
 
 
     return 0;

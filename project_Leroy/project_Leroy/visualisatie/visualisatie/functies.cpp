@@ -6,11 +6,10 @@ using namespace std;
 using namespace cv;
 #include "main.h"
 
-Ptr<ORB> orb = ORB::create();
-vector<vector<KeyPoint>> kp;
 
 vector<vector<KeyPoint>> LeesKps(string titel)
 {
+    vector<vector<KeyPoint>> kp;
     int i = 0;
 
     //string van file
@@ -44,4 +43,33 @@ vector<vector<KeyPoint>> LeesKps(string titel)
     cout << "size:" <<kp.size()<< endl;
 
     return kp;
+}
+
+
+
+
+
+vector<Mat> Leesfotos(string titel)
+{
+    vector<Mat> temp;
+    Mat tempi;
+    string nodename;
+    string base = "pagina";
+    int i = 0;
+    while(1)
+    {
+        nodename = titel +"/" + base  + to_string(i) + ".jpg";
+        cout << nodename <<endl;
+        tempi = imread(nodename, IMREAD_GRAYSCALE);   // Read the file
+        if( tempi.empty() )                              // Check for invalid input
+        {
+            break;
+        }
+        temp.push_back(tempi);
+        i++;
+    }
+
+
+    return temp;
+
 }
