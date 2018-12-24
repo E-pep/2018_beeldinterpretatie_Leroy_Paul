@@ -10,16 +10,38 @@ Ptr<ORB> orb = ORB::create();
 vector<vector<KeyPoint>> kp_FrontPages;
 vector<vector<KeyPoint>> kp_Book1Pages;
 
-void AdKpFrontPage(Mat image,String nodename)
+void Addboek(vector<Mat> images, String titel)
 {
     vector<KeyPoint> kp;
-    orb->detect( image, kp );
+    Mat dp;
 
-    cout << "in readKpFrontPages" << endl;
-    FileStorage fs("kp_frontpages.yml", FileStorage::APPEND);
-    write( fs , nodename, kp );
+    string nodename;
+    string base = "pagina";
+
+
+    string fs1string;
+    string fs2string;
+    string base1 = "_kp.yml";
+    string base2 = "_dp.yml";
+
+    fs1string = titel + base1;
+    fs2string = titel + base2;
+
+    FileStorage fs(fs1string, FileStorage::APPEND);
+    FileStorage fs2(fs2string, FileStorage::APPEND);
+
+    for(int i = 0; i< images.size(); i++)
+    {
+        orb->detect( images[i], kp );
+        orb->compute(images[i], kp, dp);
+        nodename = base  + to_string(i);
+        write( fs , nodename, kp );
+        write( fs2 , nodename, dp );
+    }
 
     fs.release();
+    fs2.release();
+
     return;
 }
 

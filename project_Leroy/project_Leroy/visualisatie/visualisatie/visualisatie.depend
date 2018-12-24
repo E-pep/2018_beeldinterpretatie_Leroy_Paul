@@ -1,0 +1,16 @@
+# depslib dependency file v1.0
+1545654212 source:/home/paul/Desktop/school/1819/2018_beeldinterpretatie_Leroy_Paul/project_Leroy/project_Leroy/visualisatie/visualisatie/functies.cpp
+	<iostream>
+	<opencv2/opencv.hpp>
+	<string>
+	"main.h"
+
+1545654267 source:/home/paul/Desktop/school/1819/2018_beeldinterpretatie_Leroy_Paul/project_Leroy/project_Leroy/visualisatie/visualisatie/main.cpp
+	<iostream>
+	<opencv2/opencv.hpp>
+	"main.h"
+
+1545653622 /home/paul/Desktop/school/1819/2018_beeldinterpretatie_Leroy_Paul/project_Leroy/project_Leroy/visualisatie/visualisatie/main.h
+	<iostream>
+	<opencv2/opencv.hpp>
+

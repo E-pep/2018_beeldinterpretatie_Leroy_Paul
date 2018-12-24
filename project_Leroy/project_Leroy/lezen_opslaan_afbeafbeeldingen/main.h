@@ -9,12 +9,13 @@ using namespace cv;
 
 extern Ptr<ORB> orb;
 extern vector<vector<KeyPoint>> kp_FrontPages;
-void AdKpFrontPage(Mat image, String nodename);
 void readkpFile(Mat image);
 
 
 void ReadFPkps();
 string FindCover(Mat image);
+
+void Addboek(vector<Mat> images, String titel);
 
 
 #endif // MAIN_H_INCLUDED
