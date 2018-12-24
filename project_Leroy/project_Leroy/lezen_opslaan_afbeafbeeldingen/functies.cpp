@@ -1,5 +1,6 @@
 #include <iostream>
 #include <opencv2/opencv.hpp>
+#include <string>
 
 using namespace std;
 using namespace cv;
@@ -46,10 +47,11 @@ void ReadFPkps()
     int i = 1;
     vector<KeyPoint> temp;
     string nodename;
+    string base = "kpfrontpage";
     FileStorage fs("kp_frontpages.yml", FileStorage::READ);
     while(1)
     {
-        nodename = "kpfrontpage1" + i;
+        nodename = base  + to_string(i);
         cout << nodename <<endl;
         FileNode kptFileNode = fs[nodename];
         cout << kptFileNode.empty()<< endl;
@@ -65,4 +67,12 @@ void ReadFPkps()
     }
   cout << "size:" <<kp_FrontPages.size()<< endl;
   return;
+}
+
+
+string FindCover(Mat image)
+{
+    cout << "in FindCover" << endl;
+
+
 }

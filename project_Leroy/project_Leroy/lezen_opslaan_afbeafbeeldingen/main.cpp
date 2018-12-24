@@ -10,6 +10,7 @@ int main(int argc, const char** argv)
 {
     Mat frame;
     Mat cover;
+    string NodeBook;
 
     CommandLineParser parser(argc,argv,
         "{help h|  |show this message}"
@@ -32,7 +33,7 @@ int main(int argc, const char** argv)
 
  ///this is only needed when you want to add new picture keypoints
 
-    ReadFPkps();
+
   //  readkpFile(cover);
 
  ///
@@ -48,11 +49,25 @@ int main(int argc, const char** argv)
 
     /// initialization
 
+        //reading all front pages known
+        ReadFPkps();
+        cout << "laat de cover zien van het boek aan de webcam" << endl;
+        //find which cover is on the webcam
+        while(1)
+        {
+            cap >> frame;
+
+            NodeBook = FindCover(frame);
+
+            if(frame.empty())
+            {
+                cout << "Video finished" << endl;
+                break;
+            }
+        }
 
 
 
-
-    // press q to quit
     while(1)
     {
         cap >> frame;

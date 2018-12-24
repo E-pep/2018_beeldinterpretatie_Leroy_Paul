@@ -12,7 +12,9 @@ extern vector<vector<KeyPoint>> kp_FrontPages;
 void AdKpFrontPage(Mat image, String nodename);
 void readkpFile(Mat image);
 
+
 void ReadFPkps();
+string FindCover(Mat image);
 
 
 #endif // MAIN_H_INCLUDED
