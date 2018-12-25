@@ -141,7 +141,7 @@ int Beslispagina(int good_matches,int huidige_pagina)
         cout  << "gevonden pagina "<< huidige_pagina<< endl;
     }
 
-    cout << good_matches << endl;
+   // cout << good_matches << endl;
 
     ///bij langdurige drop van features, waarschijnlijk volgt een andere pagina => bestematchwaarde op 0 zetten en pagina met beste match zoeken
     if(good_matches < 150)

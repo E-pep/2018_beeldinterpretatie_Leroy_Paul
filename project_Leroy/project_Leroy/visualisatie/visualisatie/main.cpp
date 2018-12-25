@@ -1,8 +1,13 @@
 #include <iostream>
 #include <opencv2/opencv.hpp>
+#include "opencv2/ovis.hpp"
+#include <opencv2/aruco.hpp>
 
 using namespace std;
 using namespace cv;
+using namespace cv::ovis;
+using namespace cv::aruco;
+
 
 #include "main.h"
 
@@ -35,6 +40,26 @@ int main(int argc, const char** argv)
     vector<Point2f> scene_corners(4);
 
 
+    //we maken gebruik van de aruco library om onze camera pose te vinden
+    //aruco
+    Mat aruc;
+    Ptr<Dictionary>adict = Dictionary::get(DICT_4X4_50);
+
+    cv::aruco::drawMarker(adict, 0,400, aruc);
+    imshow("marker", aruc);
+
+    addResourceLocation("packs/Sinbad.zip");
+    addResourceLocation("models/kip");
+    addResourceLocation("models/paard");
+    addResourceLocation("models/varken");
+    addResourceLocation("models/koe");
+    addResourceLocation("models/schaap");
+    Mat K = (Mat_<double>(3,3) << 530, 0, 320, 0, 530, 240, 0, 0, 1);
+    Ptr<WindowScene> sceneAR = createWindow("VR", Size(1280,720),0);
+    sceneAR->setCameraIntrinsics(K, Size(1280,720));
+    sceneAR->createEntity("figure", "test.mesh", Vec3f(0, 0,0), Vec3f(0, 1.57, 0));
+    sceneAR->createLightEntity("sun", Vec3f(0, 0, 100));
+
 
     ///hoeken van pagina's
     vector<Point2f> obj_corners(4);
@@ -43,7 +68,6 @@ int main(int argc, const char** argv)
     CommandLineParser parser(argc,argv,
         "{help h|  |show this message}"
         "{titel bk|  |(required)}"
-        "{foto f|   |(required)}"
     );
 
     if(parser.has("help"))
@@ -105,7 +129,7 @@ int main(int argc, const char** argv)
     ///ONEINDIGE LUS
     huidige_pagina = 0;
 
-    while(cap.isOpened())
+    while(ovis::waitKey(1) != 27)
     {
         cap >> frame;
 
@@ -152,6 +176,26 @@ int main(int argc, const char** argv)
                     huidige_pagina = newpagelus;
                 }
             }
+
+
+            sceneAR->removeEntity("figure");
+            switch(huidige_pagina)
+            {
+                case 0: sceneAR->createEntity("figure", "test.mesh", Vec3f(0, 0,0), Vec3f(0, 1.57, 0));
+                        break;
+                case 1: sceneAR->createEntity("figure", "koe.mesh", Vec3f(0, 0,0), Vec3f(1.57, 0, 0));
+    			sceneAR->setEntityProperty("figure", ENTITY_SCALE , Scalar(10,10,10));
+                        break;
+                case 2: sceneAR->createEntity("figure", "paard.mesh", Vec3f(0, 0,0), Vec3f(0, 0, 0));
+    			sceneAR->setEntityProperty("figure", ENTITY_SCALE , Scalar(0.3,0.3,0.3));
+                        break;
+                case 3: sceneAR->createEntity("figure", "varken.mesh", Vec3f(0, 0,0), Vec3f(0, 1.57, 0));
+                        break;
+                case 4: sceneAR->createEntity("figure", "schaap.mesh", Vec3f(0, 0,0), Vec3f(0, 0, 0));
+                        sceneAR->setEntityProperty("figure", ENTITY_SCALE , Scalar(0.1,0.1,0.1));
+                        break;
+                default: sceneAR->createEntity("figure", "test.mesh", Vec3f(0, 0,0), Vec3f(0, 1.57, 0));
+            }
         }
 
 
@@ -176,12 +220,29 @@ int main(int argc, const char** argv)
 
 
 
+
+        sceneAR->setBackground(frame);
+        vector<vector<Point2f> > corners;
+        vector<int> ids;
+        aruco::detectMarkers(frame, adict,corners,ids);
+
+
+
         imshow( "comparing", img_matches );
         good_matches.clear();
         obj.clear();
         scene.clear();
         scene_corners.clear();
-        waitKey(25);
+        cv::waitKey(25);
+
+        if(ids.size() == 0)
+        {
+            continue;
+        }
+        vector<cv::Vec3d> rvecs;
+        vector<cv::Vec3d> tvecs;
+        estimatePoseSingleMarkers(corners,5,K,noArray(),rvecs,tvecs);
+        sceneAR->setCameraPose(tvecs[0], rvecs[0], true);
     }
 
 
