@@ -25,12 +25,9 @@ int main(int argc, const char** argv)
     vector< DMatch > matches;
     vector< DMatch > good_matches;
 
-    int bestematchwaarde = 0;
+
     int huidige_pagina = 0;
-    int min_dist_int = 100;
-    double min_dist = 100;
-    double max_dist = 0;
-    double dist;
+
     vector<Point2f> obj;
     vector<Point2f> scene;
     vector<Point2f> swapvector;
@@ -73,7 +70,6 @@ int main(int argc, const char** argv)
     paginas = Leesfotos(titel_boek);
 
 
-
     ///hoekwaardes ingeven
 
     obj_corners[0] = cvPoint(0,0);
@@ -108,9 +104,7 @@ int main(int argc, const char** argv)
 
     ///ONEINDIGE LUS
     huidige_pagina = 0;
-    int lusteller = 0;
-    int counter = 0;
-    int aantal_kleiner = 0;
+
     while(cap.isOpened())
     {
         cap >> frame;
@@ -125,53 +119,41 @@ int main(int argc, const char** argv)
         detector->detect( frame, keypoints_frame );
         detector->compute(frame, keypoints_frame, descriptors_frame);
 
+        ///vergelijken van descriptors beide afbeeldingen en goeie eruithalen
+        Mat testp = paginas[huidige_pagina];
+        vector<KeyPoint> kp = boek_kp[huidige_pagina];
 
-        //alleen de goede matches overhouden
+        detector->compute(testp,kp,boek_desc);
+        matcher->match( boek_desc, descriptors_frame, matches);
 
-        //-- Quick calculation of max and min distances between keypoints
-          //  lusteller = 0;
-            ///vergelijken van descriptors beide afbeeldingen en goeie eruithalen
-            Mat testp = paginas[lusteller];
-            vector<KeyPoint> kp = boek_kp[lusteller];
 
-            detector->compute(testp,kp,boek_desc);
-            matcher->match( boek_desc, descriptors_frame, matches);
+        ///alleen de goede matches overhouden
+        good_matches = Vindgoodmatches(boek_desc, matches);
 
-            for( int i = 0; i < boek_desc.rows; i++ )
+
+
+        huidige_pagina = Beslispagina(good_matches.size(), huidige_pagina);
+
+        ///nieuwe pagina zoeken
+        if(huidige_pagina == -1)
+        {
+            int houbij = 0;
+            for(int newpagelus = 0; newpagelus < 5; newpagelus++)
             {
-                dist = matches[i].distance;
-                if (dist == 0)
+                Mat searchpage = paginas[newpagelus];
+                vector<KeyPoint> kps = boek_kp[newpagelus];
+                detector->compute(searchpage,kps,boek_desc);
+                matcher->match( boek_desc, descriptors_frame, matches);
+
+                good_matches = Vindgoodmatches(boek_desc, matches);
+                if(good_matches.size() > houbij)
                 {
-                    continue;
-                }
-                if( dist < min_dist_int ) min_dist = dist;
-                if( dist > max_dist ) max_dist = dist;
-            }
-
-
-
-            for( int i = 0; i < boek_desc.rows; i++ )
-            {
-                if( matches[i].distance <= 3*min_dist )
-                {
-                    good_matches.push_back( matches[i]);
+                    houbij = good_matches.size();
+                    huidige_pagina = newpagelus;
                 }
             }
+        }
 
-
-
-            if(good_matches.size() > bestematchwaarde && good_matches.size() > 60)
-            {
-                bestematchwaarde = good_matches.size();
-                huidige_pagina = lusteller;
-                cout  << "gevonden pagina "<< lusteller<< endl;
-            }
-            cout << good_matches.size() << endl;
-            if(good_matches.size() < 50)
-            {
-                aantal_kleiner++;
-                cout << "kleiner" << endl;
-            }
 
 
                 drawMatches( paginas[huidige_pagina], boek_kp[huidige_pagina], frame, keypoints_frame,good_matches, img_matches, Scalar::all(-1), Scalar::all(-1),std::vector<char>(), DrawMatchesFlags::NOT_DRAW_SINGLE_POINTS );
@@ -182,35 +164,23 @@ int main(int argc, const char** argv)
                     scene.push_back( keypoints_frame[ good_matches[i].trainIdx ].pt );
                 }
 
+
+
+
                 if(good_matches.size() > 0)
                 {
 
-                    H = findHomography( obj, scene, RANSAC );
-
-                if(!H.empty())
-                {
-
-                perspectiveTransform( obj_corners, scene_corners, H);
-                line( img_matches, scene_corners[0] + Point2f( paginas[0].cols, 0), scene_corners[1] + Point2f( paginas[0].cols, 0), Scalar(0, 255, 0), 4 );
-                line( img_matches, scene_corners[1] + Point2f( paginas[0].cols, 0), scene_corners[2] + Point2f( paginas[0].cols, 0), Scalar( 0, 255, 0), 4 );
-                line( img_matches, scene_corners[2] + Point2f( paginas[0].cols, 0), scene_corners[3] + Point2f( paginas[0].cols, 0), Scalar( 0, 255, 0), 4 );
-                line( img_matches, scene_corners[3] + Point2f( paginas[0].cols, 0), scene_corners[0] + Point2f( paginas[0].cols, 0), Scalar( 0, 255, 0), 4 );
-                }
+                    img_matches = TekenLijnen(obj, scene, img_matches,paginas[0], scene_corners, obj_corners);
 
                 }
+
+
 
         imshow( "comparing", img_matches );
         good_matches.clear();
         obj.clear();
         scene.clear();
         scene_corners.clear();
-
-
-
-
-
-
-        counter++;
         waitKey(25);
     }
 
