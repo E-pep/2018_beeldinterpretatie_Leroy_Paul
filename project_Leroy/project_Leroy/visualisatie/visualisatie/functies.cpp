@@ -95,6 +95,7 @@ Mat TekenLijnen(vector<Point2f> obj, vector<Point2f> scene,Mat img_matches,Mat p
 
 vector< DMatch > Vindgoodmatches(Mat boek_desc,vector< DMatch > matches)
 {
+    //-- Draw only "good" matches (i.e. whose distance is less than 3*min_dist voor similariteit of deze goed genoeg is
     int min_dist_int = 100;
     double min_dist = 100;
     double max_dist = 0;

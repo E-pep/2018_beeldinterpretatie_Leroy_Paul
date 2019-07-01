@@ -112,7 +112,7 @@ int main(int argc, const char** argv)
     cout<< "test:" << boek_kp.size() << endl;
     Mat temp;
     /// openen van camera
-    VideoCapture cap(0);
+    VideoCapture cap(1);
 
     if(!cap.isOpened())
     {
