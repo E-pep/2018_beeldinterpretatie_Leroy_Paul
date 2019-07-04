@@ -11,7 +11,7 @@
 				<Option object_output="obj/Debug/" />
 				<Option type="1" />
 				<Option compiler="gcc" />
-				<Option parameters="-im=&apos;vorm_belgie.jpg&apos;" />
+				<Option parameters="-im=&apos;vorm_belgie.jpg&apos; -mp=&apos;benelux.png&apos;" />
 				<Compiler>
 					<Add option="-g" />
 				</Compiler>
