@@ -111,7 +111,7 @@ int main(int argc,const char** argv)
     /// Show in a window
     namedWindow( "Contours", CV_WINDOW_AUTOSIZE );
     imshow( "Contours", masker );
-
+/*
 
   // Trying with HOG descriptor
     HOGDescriptor hog;
@@ -120,7 +120,7 @@ int main(int argc,const char** argv)
 
     hog.setSVMDetector(descriptors);
 
-
+*/
 
     Mat edges;
     namedWindow("edges",1);
@@ -136,7 +136,7 @@ int main(int argc,const char** argv)
         // Calculate Moments
         double d1 = matchShapes(masker, edges, CONTOURS_MATCH_I1, 0);
         cout << "momenten vergelijken:" << d1 << endl;
-         detectAndDisplay(frame, hog);
+ //        detectAndDisplay(frame, hog);
         if(waitKey(30) >= 0) break;
     }
 
