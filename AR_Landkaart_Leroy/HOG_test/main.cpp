@@ -27,8 +27,11 @@ int main(int argc,const char** argv)
         return -1;
     }
 
-     imshow( "Original image", Image1 );
-
+    imshow( "Original image", Image1 );
     waitKey(0);
+    for(;;)
+    {
+    }
+
     return 0;
 }

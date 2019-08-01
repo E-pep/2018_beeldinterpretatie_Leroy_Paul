@@ -4,191 +4,166 @@
 using namespace std;
 using namespace cv;
 
+// HOGDescriptor visual_imagealizer
+// adapted for arbitrary size of feature sets and training images
 
-///--------------------------------------Variabelen-------------------------------------
-Mat testafbeelding;
-Mat testafbeelding_gray;
-Mat cannyafbeelding;
-Mat mapafbeelding;
-Mat mapafbeelding_gray;
-vector<vector<Point> > contours;
-vector<Vec4i> hierarchy;
-RNG rng(12345);
-
-int lowThreshold = 0;
-const int max_lowThreshold = 100;
-const int ratio = 3;
-const int kernel_size = 5;
-const char* window_name = "Edge Map";
-
-///-------------------------------------- functie declaraties---------------------------------------
-
-void detectAndDisplay(Mat frame, HOGDescriptor hog);
-
-int main(int argc,const char** argv)
+Mat get_hogdescriptor_visu(const Mat& color_origImg, vector<float>& descriptorValues, const Size & size )
 {
+    const int DIMX = size.width;
+    const int DIMY = size.height;
+    float zoomFac = 3;
+    Mat visu;
+    resize(color_origImg, visu, Size( (int)(color_origImg.cols*zoomFac), (int)(color_origImg.rows*zoomFac) ) );
 
+    int cellSize        = 8;
+    int gradientBinSize = 9;
+    float radRangeForOneBin = (float)(CV_PI/(float)gradientBinSize); // dividing 180 into 9 bins, how large (in rad) is one bin?
 
-    ///--------------------------------------Input & Argumenten-----------------------------
-
-    CommandLineParser parser(argc,argv,
-    "{help h|  |show this message}"
-    "{image  im|  |(required)}"
-    "{map  mp|  |(required)}"
-    );
-
-    if(parser.has("help"))
+    // prepare data structure: 9 orientation / gradient strenghts for each cell
+    int cells_in_x_dir = DIMX / cellSize;
+    int cells_in_y_dir = DIMY / cellSize;
+    float*** gradientStrengths = new float**[cells_in_y_dir];
+    int** cellUpdateCounter   = new int*[cells_in_y_dir];
+    for (int y=0; y<cells_in_y_dir; y++)
     {
-        cout << "geef volledig path van foto's mee als argument" << endl;
-        parser.printMessage();
-        return 0;
-    }
-
-    string image_string(parser.get<string>("image"));
-    if(image_string.empty())
-    {
-        cout << "argument niet gevonden" << endl;
-        parser.printMessage();
-        return -1;
-    }
-
-
-    testafbeelding = imread(image_string, IMREAD_COLOR);
-
-    if( testafbeelding.empty() )                      /// Check for invalid input
-    {
-        cout <<  "Could not open or find image1" << std::endl ;
-        return -1;
-    }
-
-
-
-    string map_string(parser.get<string>("map"));
-    if(map_string.empty())
-    {
-        cout << "argument niet gevonden" << endl;
-        parser.printMessage();
-        return -1;
-    }
-
-    mapafbeelding = imread(map_string, IMREAD_COLOR);
-
-    if( mapafbeelding.empty() )                      /// Check for invalid input
-    {
-        cout <<  "Could not open or find image1" << std::endl ;
-        return -1;
-    }
-
-
-    // videocapture webcam
-
-
-    VideoCapture cap(0); // open the default camera
-    if(!cap.isOpened())  // check if we succeeded
-    {
-        cout <<  "Could not open or find image1" << endl ;
-        return -1;
-    }
-
-
-
-    // veranderingen op de afbeeldingen zelf zoals contour en shit!!!!!!!!!
-
-
-    cvtColor( testafbeelding, testafbeelding_gray, COLOR_BGR2GRAY );
-    cvtColor( mapafbeelding, mapafbeelding_gray, COLOR_BGR2GRAY );
-
-    Canny( testafbeelding_gray, cannyafbeelding, 100, 100*2 );
-    imshow( "canny afbeelding", cannyafbeelding );
-
-    findContours(cannyafbeelding, contours,hierarchy, RETR_EXTERNAL, CHAIN_APPROX_NONE);
-
-
-    /// Draw contours
-    Mat masker = Mat::zeros(cannyafbeelding.rows, cannyafbeelding.cols, CV_8UC1);
-
-    drawContours(masker, contours, -1, Scalar(255), CV_FILLED);
-    /// Show in a window
-    namedWindow( "Contours", CV_WINDOW_AUTOSIZE );
-    imshow( "Contours", masker );
-/*
-
-  // Trying with HOG descriptor
-    HOGDescriptor hog;
-    vector< float > descriptors;
-    hog.compute(masker, descriptors);
-
-    hog.setSVMDetector(descriptors);
-
-*/
-
-    Mat edges;
-    namedWindow("edges",1);
-    for(;;)
-    {
-        Mat frame;
-        cap >> frame; // get a new frame from camera
-        cvtColor(frame, edges, COLOR_BGR2GRAY);
-        GaussianBlur(edges, edges, Size(7,7), 1.5, 1.5);
-        Canny(edges, edges, 0, 30, 3);
-        imshow("edges", edges);
-
-        // Calculate Moments
-        double d1 = matchShapes(masker, edges, CONTOURS_MATCH_I1, 0);
-        cout << "momenten vergelijken:" << d1 << endl;
- //        detectAndDisplay(frame, hog);
-        if(waitKey(30) >= 0) break;
-    }
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-  ///OTSU threshold voor map beter
-
-   Mat mapafbeelding_otsu;
-   threshold(mapafbeelding_gray,mapafbeelding_otsu,0,255,THRESH_OTSU | THRESH_BINARY_INV);
-   imshow("OTSU",mapafbeelding_otsu);
-
-   erode(mapafbeelding_otsu, mapafbeelding_otsu, Mat(), Point(-1,-1), 2);
-   //dilate(mapafbeelding_otsu, mapafbeelding_otsu, Mat(), Point(-1,-1), 2);
-imshow("opening", mapafbeelding_otsu);
-
-    //vinden van connected components (landen)
-    vector<vector<Point> > contours_map;
-    findContours(mapafbeelding_otsu, contours_map,hierarchy, CV_RETR_LIST, CV_CHAIN_APPROX_SIMPLE);
-
-
-
-        vector< vector<Point>> hulls;
-
-        for(size_t i=0; i<contours_map.size(); i++)
+        gradientStrengths[y] = new float*[cells_in_x_dir];
+        cellUpdateCounter[y] = new int[cells_in_x_dir];
+        for (int x=0; x<cells_in_x_dir; x++)
         {
-        vector<Point> hull;
-        convexHull(contours_map[i], hull);
-        hulls.push_back(hull);
+            gradientStrengths[y][x] = new float[gradientBinSize];
+            cellUpdateCounter[y][x] = 0;
+
+            for (int bin=0; bin<gradientBinSize; bin++)
+                gradientStrengths[y][x][bin] = 0.0;
         }
-     Mat mask3 = Mat::zeros(mapafbeelding_otsu.rows, mapafbeelding_otsu.cols, CV_8UC1);
-    drawContours(mask3, hulls, -1, 255, -1);
-    imshow("contours_map", mask3);
+    }
+
+    // nr of blocks = nr of cells - 1
+    // since there is a new block on each cell (overlapping blocks!) but the last one
+    int blocks_in_x_dir = cells_in_x_dir - 1;
+    int blocks_in_y_dir = cells_in_y_dir - 1;
+
+    // compute gradient strengths per cell
+    int descriptorDataIdx = 0;
+    int cellx = 0;
+    int celly = 0;
+
+    for (int blockx=0; blockx<blocks_in_x_dir; blockx++)
+    {
+        for (int blocky=0; blocky<blocks_in_y_dir; blocky++)
+        {
+            // 4 cells per block ...
+            for (int cellNr=0; cellNr<4; cellNr++)
+            {
+                // compute corresponding cell nr
+                cellx = blockx;
+                celly = blocky;
+                if (cellNr==1) celly++;
+                if (cellNr==2) cellx++;
+                if (cellNr==3)
+                {
+                    cellx++;
+                    celly++;
+                }
+
+                for (int bin=0; bin<gradientBinSize; bin++)
+                {
+                    float gradientStrength = descriptorValues[ descriptorDataIdx ];
+                    descriptorDataIdx++;
+
+                    gradientStrengths[celly][cellx][bin] += gradientStrength;
+
+                } // for (all bins)
 
 
-    waitKey(0);
-    return 0;
-}
+                // note: overlapping blocks lead to multiple updates of this sum!
+                // we therefore keep track how often a cell was updated,
+                // to compute average gradient strengths
+                cellUpdateCounter[celly][cellx]++;
+
+            } // for (all cells)
+
+
+        } // for (all block x pos)
+    } // for (all block y pos)
+
+
+    // compute average gradient strengths
+    for (celly=0; celly<cells_in_y_dir; celly++)
+    {
+        for (cellx=0; cellx<cells_in_x_dir; cellx++)
+        {
+
+            float NrUpdatesForThisCell = (float)cellUpdateCounter[celly][cellx];
+
+            // compute average gradient strenghts for each gradient bin direction
+            for (int bin=0; bin<gradientBinSize; bin++)
+            {
+                gradientStrengths[celly][cellx][bin] /= NrUpdatesForThisCell;
+            }
+        }
+    }
+
+    // draw cells
+    for (celly=0; celly<cells_in_y_dir; celly++)
+    {
+        for (cellx=0; cellx<cells_in_x_dir; cellx++)
+        {
+            int drawX = cellx * cellSize;
+            int drawY = celly * cellSize;
+
+            int mx = drawX + cellSize/2;
+            int my = drawY + cellSize/2;
+
+            rectangle(visu, Point((int)(drawX*zoomFac), (int)(drawY*zoomFac)), Point((int)((drawX+cellSize)*zoomFac), (int)((drawY+cellSize)*zoomFac)), Scalar(100,100,100), 1);
+
+            // draw in each cell all 9 gradient strengths
+            for (int bin=0; bin<gradientBinSize; bin++)
+            {
+                float currentGradStrength = gradientStrengths[celly][cellx][bin];
+
+                // no line to draw?
+                if (currentGradStrength==0)
+                    continue;
+
+                float currRad = bin * radRangeForOneBin + radRangeForOneBin/2;
+
+                float dirVecX = cos( currRad );
+                float dirVecY = sin( currRad );
+                float maxVecLen = (float)(cellSize/2.f);
+                float scale = 2.5; // just a visualization scale, to see the lines better
+
+                // compute line coordinates
+                float x1 = mx - dirVecX * currentGradStrength * maxVecLen * scale;
+                float y1 = my - dirVecY * currentGradStrength * maxVecLen * scale;
+                float x2 = mx + dirVecX * currentGradStrength * maxVecLen * scale;
+                float y2 = my + dirVecY * currentGradStrength * maxVecLen * scale;
+
+                // draw gradient visualization
+                line(visu, Point((int)(x1*zoomFac),(int)(y1*zoomFac)), Point((int)(x2*zoomFac),(int)(y2*zoomFac)), Scalar(0,255,0), 1);
+
+            } // for (all bins)
+
+        } // for (cellx)
+    } // for (celly)
+
+
+    // don't forget to free memory allocated by helper data structures!
+    for (int y=0; y<cells_in_y_dir; y++)
+    {
+        for (int x=0; x<cells_in_x_dir; x++)
+        {
+            delete[] gradientStrengths[y][x];
+        }
+        delete[] gradientStrengths[y];
+        delete[] cellUpdateCounter[y];
+    }
+    delete[] gradientStrengths;
+    delete[] cellUpdateCounter;
+
+    return visu;
+
+} // get_hogdescriptor_visu
 
 
 void detectAndDisplay(Mat frame, HOGDescriptor hog)
@@ -214,5 +189,74 @@ void detectAndDisplay(Mat frame, HOGDescriptor hog)
     //-- Show what you got
     imshow( "gevonden persoon", frame );
 }
+
+int main(int argc,const char** argv)
+{
+    string ImageName1 = "test.png";
+    Mat Image1;
+    Mat Image1_gray;
+    Mat detected_edges;
+    int lowThreshold = 100;
+    int ratio = 3;
+    int kernel_size = 3;
+
+    HOGDescriptor d1;
+
+    ///Adding a little help option and command line parser input
+    CommandLineParser parser(argc,argv,
+        "{help h|  |show this message}"
+        "{image_gray  ig|  |(required)}"
+        "{image_color  ic|  |(required)}"
+    );
+
+
+   Image1 = imread(ImageName1, IMREAD_COLOR);
+
+
+
+    if( Image1.empty() )                      /// Check for invalid input
+    {
+        cout <<  "Could not open or find image1" << std::endl ;
+        return -1;
+    }
+
+    imshow( "Original image", Image1 );
+
+
+    //We need the gray color
+
+    cvtColor(Image1, Image1_gray, CV_BGR2GRAY);
+
+    ///finding the contour
+
+    // Reduce noise with a kernel 3x3
+    blur( Image1_gray, detected_edges, Size(3,3) );
+
+    // Canny detector
+    Canny( detected_edges, detected_edges, lowThreshold, lowThreshold*ratio, kernel_size );
+
+    imshow( "Canny", detected_edges );
+    resize(detected_edges, detected_edges, cv::Size(200,200));
+
+    //Trying to compute HOG
+
+    vector<float> descriptorsValues;
+    vector<Point> locations;
+    d1.compute( detected_edges, descriptorsValues, Size(0,0), Size(0,0), locations);
+
+    cout << "HOG descriptor size is " << d1.getDescriptorSize() << endl;
+    cout << "img dimensions: " << detected_edges.cols << " width x " << detected_edges.rows << "height" << endl;
+    cout << "Found " << descriptorsValues.size() << " descriptor values" << endl;
+    cout << "Nr of locations specified : " << locations.size() << endl;
+
+    Mat r1 = get_hogdescriptor_visu(detected_edges, descriptorsValues, Size(200,200) );
+    imshow( "R1", r1 );
+
+    detectAndDisplay(Image1, d1);
+
+    waitKey(0);
+    return 0;
+}
+
 
 
