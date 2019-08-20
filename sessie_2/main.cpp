@@ -90,11 +90,11 @@ int main(int argc,const char** argv)
 
     ///opdracht 1:  Segmenteer de verkeersborden in de BGR kleurenruimte
 
-    segmenteer_bgr(Image1);
+    //segmenteer_bgr(Image1);
 
     ///opdracht 2: Segmenteer de verkeersborden in de HSV kleurenruimte
 
-    //segmenteer_hsv(Image1);
+    segmenteer_hsv(Image1);
 
     ///Opdracht 3: Gebruik connected component analyse om enkel het stopbord over te houden (zie sessie_1)
 
