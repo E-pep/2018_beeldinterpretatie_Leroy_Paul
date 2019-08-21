@@ -8,7 +8,7 @@ using namespace cv;
 
 ///functions
 
-vector< vector<Point>> component_analyse(Mat image);
+vector<Point> component_analyse(Mat image);
 
 vector<Point> get_hulls(Mat image);
 
@@ -85,22 +85,24 @@ int main(int argc,const char** argv)
     createTrackbar( "value minimimum", "thresholds", &value_min_slider, 255, on_trackbar );
     createTrackbar( "value maximum", "thresholds", &value_max_slider, 255, on_trackbar );
     imshow( "thresholds",Image1);
-    vector< vector<Point>> hull1;
+    vector<Point> hull1;
     vector<Point> hull2;
     vector<Point> hull3;
     double testshape;
     hull2 = get_hulls(Image1);
     hull3 = get_hulls(Image2);
-            testshape = matchShapes(hull2, hull2,1,1);
-        printf("matchshapes: %f \r\n", testshape);
-    waitKey(0);
+
         while (true)
     {
 
         cap >> frame;
         hull1 = component_analyse(frame);
         hull2 = get_hulls(Image1);
-
+        if(!hull1.empty())
+        {
+        testshape = matchShapes(hull1, hull2,1,1);
+        printf("matchshapes: %f \r\n", testshape);
+        }
         imshow( "thresholds",frame);
         stop = (char) waitKey(30);
         if (stop == 'q')
@@ -114,7 +116,7 @@ int main(int argc,const char** argv)
     return 0;
 }
 
-vector< vector<Point>> component_analyse(Mat image)
+vector<Point> component_analyse(Mat image)
 {
     //afbeelding omzetten naar HSV
     Mat image_hsv;
@@ -154,7 +156,6 @@ vector< vector<Point>> component_analyse(Mat image)
     for(size_t i=0; i<contours.size(); i++)
     {
         double area0 = contourArea(contours.at(i));
-        printf("contour area: %f \r\n", area0);
         if(area0 > 50000)
         {
             vector<Point> hull;
@@ -162,7 +163,7 @@ vector< vector<Point>> component_analyse(Mat image)
             hulls.push_back(hull);
         }
     }
-
+    printf("contour size of frames: %d \r\n", hulls.size());
     drawContours(finaal, hulls, -1, 255, -1);
     imshow("contours", finaal);
 
@@ -179,8 +180,14 @@ vector< vector<Point>> component_analyse(Mat image)
     image.copyTo(totaal,finaal);
     imshow("totaal", totaal);
 
-
-    return hulls;
+    if(!hulls.empty())
+    {
+        return hulls.at(0);
+    }
+    else
+    {
+        return vector<Point>();
+    }
 }
 
 
