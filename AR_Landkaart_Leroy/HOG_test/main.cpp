@@ -7,7 +7,9 @@ using namespace cv;
 int main(int argc,const char** argv)
 {
     string ImageName1 = "test.png";
+    string ImageName2 = "test2.png";
     Mat Image1;
+    Mat Image2;
 
     ///Adding a little help option and command line parser input
     CommandLineParser parser(argc,argv,
@@ -18,7 +20,7 @@ int main(int argc,const char** argv)
 
 
    Image1 = imread(ImageName1, IMREAD_COLOR);
-
+   Image2 = imread(ImageName2, IMREAD_COLOR);
 
 
     if( Image1.empty() )                      /// Check for invalid input
@@ -29,9 +31,6 @@ int main(int argc,const char** argv)
 
     imshow( "Original image", Image1 );
     waitKey(0);
-    for(;;)
-    {
-    }
 
     return 0;
 }

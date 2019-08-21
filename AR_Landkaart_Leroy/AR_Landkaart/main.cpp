@@ -8,7 +8,10 @@ using namespace cv;
 
 ///functions
 
-void component_analyse(Mat image);
+vector< vector<Point>> component_analyse(Mat image);
+
+vector<Point> get_hulls(Mat image);
+
 
 static void on_trackbar( int, void* )
 {
@@ -18,21 +21,25 @@ static void on_trackbar( int, void* )
 
 
 /// Global variables
-int hue_min_slider = 160;
+int hue_min_slider = 142;
 int hue_max_slider = 180;
 
-int saturation_min_slider = 150;
+int saturation_min_slider = 95;
 int saturation_max_slider = 250;
 
-int value_min_slider = 150;
+int value_min_slider = 117;
 int value_max_slider = 250;
 
 
 
 int main(int argc,const char** argv)
 {
-    string ImageName1 = "test.png";
+    string ImageName1 = "vorm.jpg";
     Mat Image1;
+
+    string ImageName2 = "vorm2.jpg";
+    Mat Image2;
+
     char stop;
     Mat frame;
 
@@ -46,7 +53,7 @@ int main(int argc,const char** argv)
 
 // ------------------------------------------------------------------------ reading in test Image-------------------------------------------------
    Image1 = imread(ImageName1, IMREAD_COLOR);
-
+   Image2 = imread(ImageName2, IMREAD_COLOR);
 
 
     if( Image1.empty() )                      /// Check for invalid input
@@ -78,11 +85,22 @@ int main(int argc,const char** argv)
     createTrackbar( "value minimimum", "thresholds", &value_min_slider, 255, on_trackbar );
     createTrackbar( "value maximum", "thresholds", &value_max_slider, 255, on_trackbar );
     imshow( "thresholds",Image1);
+    vector< vector<Point>> hull1;
+    vector<Point> hull2;
+    vector<Point> hull3;
+    double testshape;
+    hull2 = get_hulls(Image1);
+    hull3 = get_hulls(Image2);
+            testshape = matchShapes(hull2, hull2,1,1);
+        printf("matchshapes: %f \r\n", testshape);
+    waitKey(0);
         while (true)
     {
 
         cap >> frame;
-        component_analyse(frame);
+        hull1 = component_analyse(frame);
+        hull2 = get_hulls(Image1);
+
         imshow( "thresholds",frame);
         stop = (char) waitKey(30);
         if (stop == 'q')
@@ -96,7 +114,7 @@ int main(int argc,const char** argv)
     return 0;
 }
 
-void component_analyse(Mat image)
+vector< vector<Point>> component_analyse(Mat image)
 {
     //afbeelding omzetten naar HSV
     Mat image_hsv;
@@ -111,14 +129,6 @@ void component_analyse(Mat image)
     int hue_high = hue_max_slider;
     int saturation_high = saturation_max_slider;
     int value_high = value_max_slider;
-/*
-    int hue_low=0;
-    int saturation_low = 115;
-    int value_low = 145;
-    int hue_high = 180;
-    int saturation_high = 255;
-    int value_high = 255;
-*/
 
     Mat finaal(image.rows, image.cols, CV_8UC3);
     inRange(image_hsv, Scalar(hue_low, saturation_low, value_low), Scalar(hue_high, saturation_high, value_high), finaal);
@@ -135,7 +145,7 @@ void component_analyse(Mat image)
     imshow("closing", finaal);
 
 
-        ///contours en hulls
+    ///contours en hulls
 
     vector< vector<Point>> contours;
     findContours(finaal.clone(), contours,  RETR_EXTERNAL, CHAIN_APPROX_NONE);
@@ -143,13 +153,24 @@ void component_analyse(Mat image)
 
     for(size_t i=0; i<contours.size(); i++)
     {
-        vector<Point> hull;
-        convexHull(contours[i], hull);
-        hulls.push_back(hull);
+        double area0 = contourArea(contours.at(i));
+        printf("contour area: %f \r\n", area0);
+        if(area0 > 50000)
+        {
+            vector<Point> hull;
+            convexHull(contours[i], hull);
+            hulls.push_back(hull);
+        }
     }
 
     drawContours(finaal, hulls, -1, 255, -1);
     imshow("contours", finaal);
+
+
+    Mat contours2;
+    contours2 = Mat::zeros(image.rows, image.cols, CV_8UC3);
+    drawContours(contours2, hulls, -1, 255, -1);
+    imshow("contours2", contours2);
 
     ///samenvoegen afbeelding met masker over
 
@@ -159,5 +180,38 @@ void component_analyse(Mat image)
     imshow("totaal", totaal);
 
 
-    return;
+    return hulls;
+}
+
+
+vector<Point> get_hulls(Mat image)
+{
+    Mat image_hsv;
+    cvtColor(image, image_hsv, CV_BGR2HSV);
+    Mat finaal(image.rows, image.cols, CV_8UC3);
+        int hue_low= hue_min_slider;
+    int saturation_low = saturation_min_slider;
+    int value_low = value_min_slider;
+
+    int hue_high = hue_max_slider;
+    int saturation_high = saturation_max_slider;
+    int value_high = value_max_slider;
+    inRange(image_hsv, Scalar(0, 100, 0), Scalar(180, 255, 255), finaal);
+    imshow("get_hulls", finaal);
+
+        ///contours en hulls
+
+    vector< vector<Point>> contours;
+    findContours(finaal.clone(), contours,  RETR_EXTERNAL, CHAIN_APPROX_NONE);
+    vector< vector<Point>> hulls;
+
+    for(size_t i=0; i<contours.size(); i++)
+    {
+            vector<Point> hull;
+            convexHull(contours[i], hull);
+            hulls.push_back(hull);
+    }
+
+    printf("hulls shape: %d \r\n", hulls.size() );
+    return hulls.at(0);
 }
