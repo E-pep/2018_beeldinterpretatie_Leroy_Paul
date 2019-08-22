@@ -8,6 +8,10 @@ using namespace cv;
 
 ///functions
 
+vector<string> getCountrylist(string pathName);
+void getCountryContours(string pathName);
+
+
 vector<Point> component_analyse(Mat image);
 
 vector<Point> get_hulls(Mat image);
@@ -34,7 +38,10 @@ int value_max_slider = 250;
 
 int main(int argc,const char** argv)
 {
+    string pathName = "/home/paul/Desktop/school/1819/2018_beeldinterpretatie_Leroy_Paul/AR_Landkaart_Leroy/AR_Landkaart/country_contours";
     string ImageName1 = "vorm.jpg";
+    getCountryContours(ImageName1);
+    return 0;
     Mat Image1;
 
     string ImageName2 = "vorm2.jpg";
@@ -158,9 +165,7 @@ vector<Point> component_analyse(Mat image)
         double area0 = contourArea(contours.at(i));
         if(area0 > 50000)
         {
-            vector<Point> hull;
-            convexHull(contours[i], hull);
-            hulls.push_back(hull);
+            hulls.push_back(contours.at(i));
         }
     }
     printf("contour size of frames: %d \r\n", hulls.size());
@@ -221,4 +226,44 @@ vector<Point> get_hulls(Mat image)
 
     printf("hulls shape: %d \r\n", hulls.size() );
     return hulls.at(0);
+}
+
+vector<string> getCountrylist(string pathName)
+{
+    vector<string> returnNames;
+    vector<String> fileNames;
+    String fullPathName = pathName + "/*.jpg";
+    glob(fullPathName, fileNames, false);
+
+    string tempString;
+    for (size_t i=0; i<fileNames.size(); i++)
+    {
+        tempString = fileNames.at(i);
+        tempString.erase(0,pathName.length()+1);
+        tempString.erase(4);
+        cout << "found file: " << tempString  << endl;
+        returnNames.push_back(tempString);
+    }
+    return returnNames;
+}
+
+
+
+vector<vector<Point>> getCountryContours(string pathName)
+{
+    Mat CountryImage;
+    vector<vector<Point>> contourList;
+    vector<Point> contour;
+
+    String fullPathName = pathName + "/*.jpg";
+    vector<String> fileNames;
+    glob(fullPathName, fileNames, false);
+
+    size_t picture_count = fileNames.size(); //number of png files in images folder
+    for (size_t i=0; i<picture_count; i++)
+    {
+        cout << "found file: " << fileNames.at(i)  << endl;
+
+    }
+
 }
