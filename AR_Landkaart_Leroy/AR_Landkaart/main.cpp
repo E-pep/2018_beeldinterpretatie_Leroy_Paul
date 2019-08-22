@@ -9,7 +9,7 @@ using namespace cv;
 ///functions
 
 vector<string> getCountrylist(string pathName);
-void getCountryContours(string pathName);
+vector<vector<Point>> getCountryContours(string pathName);
 
 
 vector<Point> component_analyse(Mat image);
@@ -40,8 +40,6 @@ int main(int argc,const char** argv)
 {
     string pathName = "/home/paul/Desktop/school/1819/2018_beeldinterpretatie_Leroy_Paul/AR_Landkaart_Leroy/AR_Landkaart/country_contours";
     string ImageName1 = "vorm.jpg";
-    getCountryContours(ImageName1);
-    return 0;
     Mat Image1;
 
     string ImageName2 = "vorm2.jpg";
@@ -201,13 +199,6 @@ vector<Point> get_hulls(Mat image)
     Mat image_hsv;
     cvtColor(image, image_hsv, CV_BGR2HSV);
     Mat finaal(image.rows, image.cols, CV_8UC3);
-        int hue_low= hue_min_slider;
-    int saturation_low = saturation_min_slider;
-    int value_low = value_min_slider;
-
-    int hue_high = hue_max_slider;
-    int saturation_high = saturation_max_slider;
-    int value_high = value_max_slider;
     inRange(image_hsv, Scalar(0, 100, 0), Scalar(180, 255, 255), finaal);
     imshow("get_hulls", finaal);
 
@@ -252,6 +243,7 @@ vector<string> getCountrylist(string pathName)
 vector<vector<Point>> getCountryContours(string pathName)
 {
     Mat CountryImage;
+    Mat CountryImage_hsv;
     vector<vector<Point>> contourList;
     vector<Point> contour;
 
@@ -263,7 +255,8 @@ vector<vector<Point>> getCountryContours(string pathName)
     for (size_t i=0; i<picture_count; i++)
     {
         cout << "found file: " << fileNames.at(i)  << endl;
-
+        CountryImage = imread(fileNames.at(i), IMREAD_COLOR);
+        cvtColor(CountryImage, CountryImage_hsv, CV_BGR2HSV);
     }
 
 }
