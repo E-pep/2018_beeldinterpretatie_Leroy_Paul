@@ -16,6 +16,8 @@ vector<Point> component_analyse(Mat image);
 
 vector<Point> get_hulls(Mat image);
 
+vector<vector<Mat>> get_vacation_pictures(vector<string> countrynames, string pathNameToVacation);
+
 
 static void on_trackbar( int, void* )
 {
@@ -25,26 +27,29 @@ static void on_trackbar( int, void* )
 
 
 /// Global variables
-int hue_min_slider = 142;
-int hue_max_slider = 180;
 
-int saturation_min_slider = 95;
-int saturation_max_slider = 250;
+// default values for the sliders
+int hue_min_slider = 50;
+int hue_max_slider = 85;
 
-int value_min_slider = 117;
-int value_max_slider = 250;
+int saturation_min_slider = 60;
+int saturation_max_slider = 255;
+
+int value_min_slider = 60;
+int value_max_slider = 255;
 
 
 
 int main(int argc,const char** argv)
 {
     string pathName = "/home/paul/Desktop/school/1819/2018_beeldinterpretatie_Leroy_Paul/AR_Landkaart_Leroy/AR_Landkaart/country_contours";
-
+    string pathNameToVacation = "/home/paul/Desktop/school/1819/2018_beeldinterpretatie_Leroy_Paul/AR_Landkaart_Leroy/AR_Landkaart/vacation_pictures";
     // vector filled with names of everey country with a contour
     vector<string> CountryList = getCountrylist(pathName);
 
 
     //check all names in the vector
+    cout << "countrylist contains:" << endl;
     for(int countList = 0; countList < CountryList.size(); countList++)
     {
         cout << CountryList.at(countList) << endl;
@@ -52,9 +57,19 @@ int main(int argc,const char** argv)
 
     // vector filled with the contourpoints of the countries => used as template
     vector<vector<Point>> CountryContours = getCountryContours(pathName);
+
+    // get the vacation pictures and sture them in a vector of vectors. Index = country
+    vector<vector<Mat>> testinlees;
+    testinlees = get_vacation_pictures(CountryList, pathNameToVacation);
+
+    for(int test = 0; test<testinlees.at(0).size(); test++)
+    {
+        string teststring;
+        teststring = "test" + test;
+        imshow(teststring, testinlees.at(0).at(test));
+    }
     waitKey(0);
     return 0;
-
 
     string ImageName1 = "Belgium.jpg";
     Mat Image1;
@@ -118,7 +133,7 @@ int main(int argc,const char** argv)
     {
 
         cap >> frame;
-        hull1 = component_analyse(Image1);
+        hull1 = component_analyse(frame);
         hull2 = get_hulls(Image1);
         if(!hull1.empty())
         {
@@ -252,8 +267,11 @@ vector<string> getCountrylist(string pathName)
     {
         tempString = fileNames.at(i);
         tempString.erase(0,pathName.length()+1);
-        tempString.erase(4);
-        cout << "found file: " << tempString  << endl;
+        tempString.pop_back();
+        tempString.pop_back();
+        tempString.pop_back();
+        tempString.pop_back();
+        cout << "found file for the list: " << tempString  << endl;
         returnNames.push_back(tempString);
     }
     return returnNames;
@@ -318,4 +336,37 @@ vector<vector<Point>> getCountryContours(string pathName)
     }
 
     return contoursList;
+}
+
+
+vector<vector<Mat>> get_vacation_pictures(vector<string> countrynames, string pathNameToVacation)
+{
+    //list we are going to return
+    vector<vector<Mat>> picturesList;
+    vector<Mat> tempVector;
+    Mat tempImage;
+    vector<String> fileNames;
+    String temp;
+    size_t picture_count;
+
+    //loop over every country we have a contour of
+    for(int countrycounter=0; countrycounter<countrynames.size(); countrycounter++)
+    {
+        temp = pathNameToVacation + "/" + countrynames.at(countrycounter) + "/*.jpg";
+        cout << "filename for path to pictures" << temp << endl;
+        //get every picturepath in the file
+        glob(temp, fileNames, false);
+
+        //read in every picture in the file
+        picture_count = fileNames.size(); //number of png files in images folder
+        for (size_t i=0; i<picture_count; i++)
+        {
+            tempImage = imread(fileNames.at(i), IMREAD_COLOR);
+            tempVector.push_back(tempImage);
+        }
+        picturesList.push_back(tempVector);
+        tempVector.clear();
+    }
+
+    return picturesList;
 }
