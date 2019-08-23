@@ -39,7 +39,24 @@ int value_max_slider = 250;
 int main(int argc,const char** argv)
 {
     string pathName = "/home/paul/Desktop/school/1819/2018_beeldinterpretatie_Leroy_Paul/AR_Landkaart_Leroy/AR_Landkaart/country_contours";
-    string ImageName1 = "vorm.jpg";
+
+    // vector filled with names of everey country with a contour
+    vector<string> CountryList = getCountrylist(pathName);
+
+
+    //check all names in the vector
+    for(int countList = 0; countList < CountryList.size(); countList++)
+    {
+        cout << CountryList.at(countList) << endl;
+    }
+
+    // vector filled with the contourpoints of the countries => used as template
+    vector<vector<Point>> CountryContours = getCountryContours(pathName);
+    waitKey(0);
+    return 0;
+
+
+    string ImageName1 = "Belgium.jpg";
     Mat Image1;
 
     string ImageName2 = "vorm2.jpg";
@@ -101,7 +118,7 @@ int main(int argc,const char** argv)
     {
 
         cap >> frame;
-        hull1 = component_analyse(frame);
+        hull1 = component_analyse(Image1);
         hull2 = get_hulls(Image1);
         if(!hull1.empty())
         {
@@ -210,10 +227,14 @@ vector<Point> get_hulls(Mat image)
 
     for(size_t i=0; i<contours.size(); i++)
     {
-            vector<Point> hull;
-            convexHull(contours[i], hull);
-            hulls.push_back(hull);
+            hulls.push_back(contours.at(i));
+            cout << "contour grootte van templates:" << contourArea(contours.at(i)) << endl;
     }
+
+    Mat contours2;
+    contours2 = Mat::zeros(image.rows, image.cols, CV_8UC3);
+    drawContours(contours2, hulls, -1, 255, -1);
+    imshow("contours van template", contours2);
 
     printf("hulls shape: %d \r\n", hulls.size() );
     return hulls.at(0);
@@ -242,21 +263,59 @@ vector<string> getCountrylist(string pathName)
 
 vector<vector<Point>> getCountryContours(string pathName)
 {
+    // vector filled with the contours of the countries
+    vector<vector<Point>> contoursList;
+
+    //variables
     Mat CountryImage;
     Mat CountryImage_hsv;
-    vector<vector<Point>> contourList;
+    Mat Total_Contour;
+    //temporary contour vector for pushing in other vector
     vector<Point> contour;
 
+    //stick .jpg after string
     String fullPathName = pathName + "/*.jpg";
+
+    //vector that keeps the full path filenames
     vector<String> fileNames;
+
+    //find all pathnames in directory
     glob(fullPathName, fileNames, false);
 
+    // loop all pictures found in file
     size_t picture_count = fileNames.size(); //number of png files in images folder
     for (size_t i=0; i<picture_count; i++)
     {
         cout << "found file: " << fileNames.at(i)  << endl;
+        // read in Images and put in Mat variable
         CountryImage = imread(fileNames.at(i), IMREAD_COLOR);
+
+        // Convert to HSV space, easier for different tints of green
         cvtColor(CountryImage, CountryImage_hsv, CV_BGR2HSV);
+
+        // We put a threshold on the image and only keep the green parts
+        Mat Image_thresholded(CountryImage.rows, CountryImage.cols, CV_8UC3);
+        inRange(CountryImage_hsv, Scalar(0, 100, 0), Scalar(180, 255, 255), Image_thresholded);
+
+        // We find all the contours in the picture
+        vector< vector<Point>> Allcontours;
+        findContours(Image_thresholded.clone(), Allcontours,  RETR_EXTERNAL, CHAIN_APPROX_NONE);
+
+        // We only keep the biggest contour
+        for(size_t i=0; i<Allcontours.size(); i++)
+        {
+            if(contourArea(Allcontours.at(i)) > 50000)
+            {
+                contoursList.push_back(Allcontours.at(i));
+            }
+        }
+
+        // Show the contour we found
+        Total_Contour = Mat::zeros(CountryImage.rows, CountryImage.cols, CV_8UC3);
+        drawContours(Total_Contour, contoursList, -1, 255, -1);
+        imshow("Total_Contour", Total_Contour);
+
     }
 
+    return contoursList;
 }
