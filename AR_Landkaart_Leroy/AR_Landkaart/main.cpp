@@ -130,6 +130,7 @@ int main(int argc,const char** argv)
     vector<Point> hull3;
     double testshape = 100;
     double temp_testshape = 100;
+    auto start, ende;
     int index;
     hull2 = get_hulls(Image1);
     hull3 = get_hulls(Image2);
@@ -155,7 +156,9 @@ int main(int argc,const char** argv)
         }
         else
         {
-            //cout << "No hull detected" << endl;
+            start = std::chrono::system_clock::now();
+            cout << "No hull detected start timing: "<< chrono::duration_cast<chrono::seconds>(ende - start).count() << "sec" << endl;
+
         }
         imshow( "thresholds",frame);
 
