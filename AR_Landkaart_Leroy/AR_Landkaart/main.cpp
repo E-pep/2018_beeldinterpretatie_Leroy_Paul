@@ -1,5 +1,6 @@
 #include <iostream>
 #include <opencv2/opencv.hpp>
+#include <chrono>
 
 using namespace std;
 using namespace cv;
@@ -47,6 +48,8 @@ int main(int argc,const char** argv)
     // vector filled with names of everey country with a contour
     vector<string> CountryList = getCountrylist(pathName);
 
+    // Same order as countryList vector
+    vector<vector<Mat>> picturesVector;
 
     //check all names in the vector
     cout << "countrylist contains:" << endl;
@@ -58,19 +61,19 @@ int main(int argc,const char** argv)
     // vector filled with the contourpoints of the countries => used as template
     vector<vector<Point>> CountryContours = getCountryContours(pathName);
 
-    // get the vacation pictures and sture them in a vector of vectors. Index = country
-    vector<vector<Mat>> testinlees;
-    testinlees = get_vacation_pictures(CountryList, pathNameToVacation);
 
-    for(int test = 0; test<testinlees.at(0).size(); test++)
+    // get the vacation pictures and sture them in a vector of vectors. Index = country
+
+    picturesVector = get_vacation_pictures(CountryList, pathNameToVacation);
+
+
+/*    for(int test = 0; test<testinlees.at(0).size(); test++)
     {
         string teststring;
         teststring = "test" + test;
         imshow(teststring, testinlees.at(0).at(test));
     }
-    waitKey(0);
-    return 0;
-
+*/
     string ImageName1 = "Belgium.jpg";
     Mat Image1;
 
@@ -125,22 +128,41 @@ int main(int argc,const char** argv)
     vector<Point> hull1;
     vector<Point> hull2;
     vector<Point> hull3;
-    double testshape;
+    double testshape = 100;
+    double temp_testshape = 100;
+    int index;
     hull2 = get_hulls(Image1);
     hull3 = get_hulls(Image2);
 
         while (true)
     {
-
         cap >> frame;
         hull1 = component_analyse(frame);
         hull2 = get_hulls(Image1);
         if(!hull1.empty())
         {
-        testshape = matchShapes(hull1, hull2,1,1);
-        printf("matchshapes: %f \r\n", testshape);
+            for(int matchShapeCounter = 0; matchShapeCounter < CountryContours.size(); matchShapeCounter++)
+            {
+                temp_testshape = matchShapes(hull1, CountryContours.at(matchShapeCounter),1,1);
+                if(temp_testshape <= testshape)
+                {
+                    testshape = temp_testshape;
+                    index = matchShapeCounter;
+                }
+            }
+            //cout << "testshape:" << index << endl;
+            cout << "detected country" << CountryList.at(index) << endl;
+        }
+        else
+        {
+            //cout << "No hull detected" << endl;
         }
         imshow( "thresholds",frame);
+
+
+
+
+
         stop = (char) waitKey(30);
         if (stop == 'q')
         {
@@ -198,7 +220,7 @@ vector<Point> component_analyse(Mat image)
             hulls.push_back(contours.at(i));
         }
     }
-    printf("contour size of frames: %d \r\n", hulls.size());
+   // printf("contour size of frames: %d \r\n", hulls.size());
     drawContours(finaal, hulls, -1, 255, -1);
     imshow("contours", finaal);
 
@@ -243,7 +265,7 @@ vector<Point> get_hulls(Mat image)
     for(size_t i=0; i<contours.size(); i++)
     {
             hulls.push_back(contours.at(i));
-            cout << "contour grootte van templates:" << contourArea(contours.at(i)) << endl;
+   //         cout << "contour grootte van templates:" << contourArea(contours.at(i)) << endl;
     }
 
     Mat contours2;
@@ -251,7 +273,7 @@ vector<Point> get_hulls(Mat image)
     drawContours(contours2, hulls, -1, 255, -1);
     imshow("contours van template", contours2);
 
-    printf("hulls shape: %d \r\n", hulls.size() );
+  //  printf("hulls shape: %d \r\n", hulls.size() );
     return hulls.at(0);
 }
 
@@ -320,20 +342,20 @@ vector<vector<Point>> getCountryContours(string pathName)
         findContours(Image_thresholded.clone(), Allcontours,  RETR_EXTERNAL, CHAIN_APPROX_NONE);
 
         // We only keep the biggest contour
-        for(size_t i=0; i<Allcontours.size(); i++)
+        for(size_t j=0; j<Allcontours.size(); j++)
         {
-            if(contourArea(Allcontours.at(i)) > 50000)
+            if(contourArea(Allcontours.at(j)) > 50000)
             {
-                contoursList.push_back(Allcontours.at(i));
+                contoursList.push_back(Allcontours.at(j));
             }
         }
 
-        // Show the contour we found
-        Total_Contour = Mat::zeros(CountryImage.rows, CountryImage.cols, CV_8UC3);
-        drawContours(Total_Contour, contoursList, -1, 255, -1);
-        imshow("Total_Contour", Total_Contour);
-
     }
+    vector< vector<Point>> test;
+    test.push_back(contoursList.at(1));
+    Total_Contour = Mat::zeros(CountryImage.rows, CountryImage.cols, CV_8UC3);
+    drawContours(Total_Contour, test, -1, 255, -1);
+    imshow("Total_Contour", Total_Contour);
 
     return contoursList;
 }
