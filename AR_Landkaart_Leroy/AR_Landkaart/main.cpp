@@ -147,7 +147,7 @@ int main(int argc,const char** argv)
             {
                 temp_testshape = matchShapes(hull1, CountryContours.at(matchShapeCounter),1,1);
                 cout << "match value: " <<temp_testshape << endl;
-                if(temp_testshape <= testshape)
+                if(temp_testshape <= testshape && temp_testshape < 0.2)
                 {
                     testshape = temp_testshape;
                     index = matchShapeCounter;
@@ -180,6 +180,8 @@ int main(int argc,const char** argv)
     return 0;
 }
 
+
+/// This was the first version, We detect countries based on the color green. We were limited by only viewing one contour, no map.
 vector<Point> component_analyse(Mat image)
 {
     //afbeelding omzetten naar HSV
@@ -200,9 +202,6 @@ vector<Point> component_analyse(Mat image)
     inRange(image_hsv, Scalar(hue_low, saturation_low, value_low), Scalar(hue_high, saturation_high, value_high), finaal);
 
     imshow("segmenteer threshold HSV", finaal);
-
-
-///zelfde doen als sessie 1
 
     //Closing
 
@@ -456,7 +455,7 @@ vector<Point> ContoursFrame_WholeMap(Mat image)
 
 
         double area0 = contourArea(contours.at(i));
-        if(area0 > 50000)
+        if(area0 > 40000)
         {
             hulls.push_back(contours.at(i));
 
