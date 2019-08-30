@@ -40,8 +40,6 @@ int saturation_max_slider = 255;
 int value_min_slider = 60;
 int value_max_slider = 255;
 
-int toggleBit = 0;
-
 
 
 int main(int argc,const char** argv)
@@ -132,23 +130,23 @@ int main(int argc,const char** argv)
     vector<Point> hull2;
     vector<Point> hull3;
     double testshape = 100;
-    double temp_testshape = 100;
     //auto start, ende;
     int index;
     hull2 = get_hulls(Image1);
     hull3 = get_hulls(Image2);
-
-        while (true)
+    double temp_testshape = 100;
+    while (true)
     {
         cap >> frame;
         hull1 =  ContoursFrame_WholeMap(frame);
         hull2 = get_hulls(Image1);
         if(!hull1.empty())
         {
+            testshape = 100;
             for(int matchShapeCounter = 0; matchShapeCounter < CountryContours.size(); matchShapeCounter++)
             {
                 temp_testshape = matchShapes(hull1, CountryContours.at(matchShapeCounter),1,1);
-                cout << "match value: " << testshape << endl;
+                cout << "match value: " <<temp_testshape << endl;
                 if(temp_testshape <= testshape)
                 {
                     testshape = temp_testshape;
@@ -157,15 +155,15 @@ int main(int argc,const char** argv)
             }
             //cout << "testshape:" << index << endl;
             cout << "detected country" << CountryList.at(index) << endl;
-        }
-        else
-        {
-           // start = std::chrono::system_clock::now();
-        //    cout << "No hull detected start timing: "<< chrono::duration_cast<chrono::seconds>(ende - start).count() << "sec" << endl;
-
+            cout << "test shape" << testshape << endl;
         }
         imshow( "thresholds",frame);
 
+        for(int ImageCounter = 0; ImageCounter <picturesVector.at(index).size(); ImageCounter++)
+        {
+            string temp_string = "foto"+ImageCounter;
+            imshow(temp_string, picturesVector.at(index).at(ImageCounter));
+        }
 
 
 
@@ -419,16 +417,6 @@ vector<vector<Mat>> get_vacation_pictures(vector<string> countrynames, string pa
 
 vector<Point> ContoursFrame_WholeMap(Mat image)
 {
-    int hue_low= hue_min_slider;
-    int saturation_low = saturation_min_slider;
-    int value_low = value_min_slider;
-
-    int hue_high = hue_max_slider;
-    int saturation_high = saturation_max_slider;
-    int value_high = value_max_slider;
-
-
-
         ///kasticket
      Mat Image2;
     cvtColor(image, Image2, CV_BGR2GRAY);
