@@ -14,6 +14,7 @@ vector<vector<Point>> getCountryContours(string pathName);
 
 
 vector<Point> component_analyse(Mat image);
+vector<Point> ContoursFrame_WholeMap(Mat image);
 
 vector<Point> get_hulls(Mat image);
 
@@ -105,14 +106,14 @@ int main(int argc,const char** argv)
     imshow( "Original image", Image1 );
 
         //read out webcam
-    VideoCapture cap(0);
+    VideoCapture cap(1);
 
     if(!cap.isOpened())
     {
         cout << "Cam could notbe opened" << endl;
         return -1;
     }
-
+    waitKey(100);
    // ------------------------------------------------------------------------ --------------------------------------------------------------------
     component_analyse(Image1);
    /// We are going to base ourself on Session 2:
@@ -130,7 +131,7 @@ int main(int argc,const char** argv)
     vector<Point> hull3;
     double testshape = 100;
     double temp_testshape = 100;
-    auto start, ende;
+    //auto start, ende;
     int index;
     hull2 = get_hulls(Image1);
     hull3 = get_hulls(Image2);
@@ -138,7 +139,7 @@ int main(int argc,const char** argv)
         while (true)
     {
         cap >> frame;
-        hull1 = component_analyse(frame);
+        hull1 =  ContoursFrame_WholeMap(frame);
         hull2 = get_hulls(Image1);
         if(!hull1.empty())
         {
@@ -156,8 +157,8 @@ int main(int argc,const char** argv)
         }
         else
         {
-            start = std::chrono::system_clock::now();
-            cout << "No hull detected start timing: "<< chrono::duration_cast<chrono::seconds>(ende - start).count() << "sec" << endl;
+           // start = std::chrono::system_clock::now();
+        //    cout << "No hull detected start timing: "<< chrono::duration_cast<chrono::seconds>(ende - start).count() << "sec" << endl;
 
         }
         imshow( "thresholds",frame);
@@ -356,8 +357,24 @@ vector<vector<Point>> getCountryContours(string pathName)
     }
     vector< vector<Point>> test;
     test.push_back(contoursList.at(1));
+
+
+
+
+
+   Point2f center;
+    float radius;
+ //   minEnclosingCircle(test.at(0), center, radius);
     Total_Contour = Mat::zeros(CountryImage.rows, CountryImage.cols, CV_8UC3);
     drawContours(Total_Contour, test, -1, 255, -1);
+    Moments moment = moments((cv::Mat)test.at(0));
+    double area = moment.m00;
+    int x,y;
+    x = moment.m10/area;
+    y = moment.m01/area;
+    circle( Total_Contour, Point(x,y), 7, Scalar( 0, 0, 255 ), FILLED, LINE_8 );
+ /*   circle( Total_Contour, center, 7, Scalar( 0, 0, 255 ), FILLED, LINE_8 );
+    circle( Total_Contour, center, radius, Scalar( 255, 0, 255 ), 2, LINE_8 );*/
     imshow("Total_Contour", Total_Contour);
 
     return contoursList;
@@ -395,3 +412,108 @@ vector<vector<Mat>> get_vacation_pictures(vector<string> countrynames, string pa
 
     return picturesList;
 }
+
+
+vector<Point> ContoursFrame_WholeMap(Mat image)
+{
+    int hue_low= hue_min_slider;
+    int saturation_low = saturation_min_slider;
+    int value_low = value_min_slider;
+
+    int hue_high = hue_max_slider;
+    int saturation_high = saturation_max_slider;
+    int value_high = value_max_slider;
+
+
+
+        ///kasticket
+     Mat Image2;
+    cvtColor(image, Image2, CV_BGR2GRAY);
+    Mat maskAA;
+    threshold(Image2,maskAA,0,255,THRESH_OTSU | THRESH_BINARY);
+    imshow("OTSU",maskAA);
+    // probleem: groot deel van ons ticket is niet meer zichtbaar
+
+    /// Histogram equalization
+    Mat maskA;
+    equalizeHist(Image2.clone(), maskA);
+    imshow("equalized", maskA);
+    threshold(maskA,maskAA,0,255,THRESH_OTSU | THRESH_BINARY);
+    imshow("uqualized en otsu",maskAA);
+
+    /// CLAHE
+    Mat result_clahe;
+     Ptr<CLAHE> clahe_pointer = createCLAHE();
+    clahe_pointer->setTilesGridSize(Size(15,15));
+    clahe_pointer->setClipLimit(1);
+    clahe_pointer->apply(Image2.clone(), result_clahe);
+    threshold(result_clahe, maskAA, 0, 255, THRESH_BINARY | THRESH_OTSU);
+    imshow("CLAHE ", maskAA);
+
+
+///zelfde doen als sessie 1
+    ///contours en hulls
+    Mat contours2;
+    vector< vector<Point>> contours;
+    findContours(maskAA.clone(), contours,  RETR_EXTERNAL, CHAIN_APPROX_NONE);
+    vector< vector<Point>> hulls;
+  vector<Point2f>center( contours.size() );
+  vector<float>radius( contours.size() );
+    for(int i=0; i<contours.size(); i++)
+    {
+       // cout << "kommek ik hier al in?" << endl;
+
+
+        double area0 = contourArea(contours.at(i));
+        if(area0 > 50000)
+        {
+            hulls.push_back(contours.at(i));
+
+         //   minEnclosingCircle(contours.at(i), center[i], radius[i]);
+        }
+    }
+   // printf("contour size of frames: %d \r\n", hulls.size());
+
+
+
+
+    contours2 = Mat::zeros(image.rows, image.cols, CV_8UC3);
+    drawContours(contours2, hulls, -1, 255, -1);
+
+    Moments moment;
+    double area;
+    int x,y;
+    int xClosest =0;
+    int yClosest =0;
+    int returnIndexHulls = 0;
+    for(int j = 0; j < hulls.size(); j++)
+    {
+        moment = moments((cv::Mat)hulls.at(j));
+        area = moment.m00;
+        x = moment.m10/area;
+        y = moment.m01/area;
+
+
+        if( (abs(x-image.cols/2) < abs(xClosest - image.cols/2)) && (abs(y-image.cols/2) < abs(x-yClosest - image.cols/2)))
+        {
+            xClosest = x;
+            yClosest = y;
+            returnIndexHulls = j;
+        }
+    }
+    circle( contours2, Point(xClosest,yClosest), 7, Scalar( 0, 0, 255 ), FILLED, LINE_8 );
+
+    imshow("contours2", contours2);
+
+
+    if(!hulls.empty())
+    {
+        return hulls.at(returnIndexHulls);
+    }
+    else
+    {
+        return vector<Point>();
+    }
+}
+
+
