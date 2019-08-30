@@ -40,6 +40,8 @@ int saturation_max_slider = 255;
 int value_min_slider = 60;
 int value_max_slider = 255;
 
+int toggleBit = 0;
+
 
 
 int main(int argc,const char** argv)
@@ -146,6 +148,7 @@ int main(int argc,const char** argv)
             for(int matchShapeCounter = 0; matchShapeCounter < CountryContours.size(); matchShapeCounter++)
             {
                 temp_testshape = matchShapes(hull1, CountryContours.at(matchShapeCounter),1,1);
+                cout << "match value: " << testshape << endl;
                 if(temp_testshape <= testshape)
                 {
                     testshape = temp_testshape;
