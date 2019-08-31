@@ -38,11 +38,46 @@ static void on_trackbar( int, void* )
 
 int main(int argc,const char** argv)
 {
+    ///The commandlineparser for variables
+    CommandLineParser parser(argc,argv,
+        "{help h             | | show this message}"
+        "{pathContours  pc   | | Path to the directory containing the contours(required)}"
+        "{pathVacation  pv   | | Path to the directory containing the vacation pictures(required)}"
+    );
+
+        // Help printing
+    if(parser.has("help") || argc <= 1) {
+        cerr << "Please use absolute paths when supplying your images." << endl;
+        parser.printMessage();
+        return 0;
+    }
+
+    // Parser fail
+    if (!parser.check()) {
+        parser.printErrors();
+        return -1;
+    }
+
+
 
 ///-------------------------------------------------------- Variables -----------------------------------------------------------------------------------------------
-    string pathName = "/home/paul/Desktop/school/1819/2018_beeldinterpretatie_Leroy_Paul/AR_Landkaart_Leroy/AR_Landkaart/country_contours";
-    string pathNameToVacation = "/home/paul/Desktop/school/1819/2018_beeldinterpretatie_Leroy_Paul/AR_Landkaart_Leroy/AR_Landkaart/vacation_pictures";
+    string pathName(parser.get<string>("pathContours"));
+    string pathNameToVacation(parser.get<string>("pathVacation"));
     string defaultPictureName = "default.jpg";
+
+    //check if arguments are filled in
+    if(pathName.empty() )
+    {
+        cerr << "give the contour pathname please" << endl;
+        return -1;
+    }
+
+    if(pathName.empty() )
+    {
+        cerr << "give the vacation pathname please" << endl;
+        return -1;
+    }
+
     Mat defaultPicture;
     // vector filled with names of everey country with a contour
     vector<string> CountryList = getCountrylist(pathName);
@@ -74,12 +109,8 @@ int main(int argc,const char** argv)
     int index;
     double temp_testshape = 100;
     Mat FrameSmall;
-    ///Adding a little help option and command line parser input
-    CommandLineParser parser(argc,argv,
-        "{help h|  |show this message}"
-        "{image_gray  ig|  |(required)}"
-        "{image_color  ic|  |(required)}"
-    );
+
+
 
 
 /// ------------------------------------------------------------------------ reading in Images-------------------------------------------------
