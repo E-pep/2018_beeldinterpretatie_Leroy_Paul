@@ -12,8 +12,8 @@ using namespace cv;
 int thresholdSlider = 12;
 double thresholdSliderDouble = (double)thresholdSlider/100;
 
-int ImageWidth = 200;
-int ImageHeight = 200;
+int ImageWidth = 400;
+int ImageHeight = 400;
 
 
 ///functions
@@ -38,6 +38,8 @@ static void on_trackbar( int, void* )
 
 int main(int argc,const char** argv)
 {
+
+///-------------------------------------------------------- Variables -----------------------------------------------------------------------------------------------
     string pathName = "/home/paul/Desktop/school/1819/2018_beeldinterpretatie_Leroy_Paul/AR_Landkaart_Leroy/AR_Landkaart/country_contours";
     string pathNameToVacation = "/home/paul/Desktop/school/1819/2018_beeldinterpretatie_Leroy_Paul/AR_Landkaart_Leroy/AR_Landkaart/vacation_pictures";
     string defaultPictureName = "default.jpg";
@@ -65,7 +67,13 @@ int main(int argc,const char** argv)
 
     char stop;
     Mat frame;
-
+    vector<Point> hull1;
+    vector<Point> hull2;
+    vector<Point> hull3;
+    double testshape = 100;
+    int index;
+    double temp_testshape = 100;
+    Mat FrameSmall;
     ///Adding a little help option and command line parser input
     CommandLineParser parser(argc,argv,
         "{help h|  |show this message}"
@@ -74,15 +82,17 @@ int main(int argc,const char** argv)
     );
 
 
-// ------------------------------------------------------------------------ reading in Images-------------------------------------------------
+/// ------------------------------------------------------------------------ reading in Images-------------------------------------------------
 
    defaultPicture = imread(defaultPictureName, IMREAD_COLOR);
 
-    if( defaultPicture.empty() )                      /// Check for invalid input
+    // Check for invalid input
+    if( defaultPicture.empty() )
     {
         cout <<  "Could not open or find image1" << std::endl ;
         return -1;
     }
+    // make the image smaller
     resize(defaultPicture, defaultPicture, Size(ImageWidth, ImageHeight));
 
     //read out webcam
@@ -94,30 +104,35 @@ int main(int argc,const char** argv)
         cout << "Cam could notbe opened" << endl;
         return -1;
     }
-   // ------------------------------------------------------------------------ --------------------------------------------------------------------
-   /// We are going to base ourself on Session 2:
-   /// Search red in our image
-    namedWindow("thresholds", WINDOW_AUTOSIZE); // Create Window
+   /// ------------------------------------------------------------------------ --------------------------------------------------------------------
+
+   //create a window with a trackbar for the threshold
+    namedWindow("thresholds", WINDOW_AUTOSIZE);
     createTrackbar( "threshold", "thresholds", &thresholdSlider, 50, on_trackbar );
     imshow( "thresholds",defaultPicture);
-    vector<Point> hull1;
-    vector<Point> hull2;
-    vector<Point> hull3;
-    double testshape = 100;
-    //auto start, ende;
-    int index;
-    double temp_testshape = 100;
+
     while (true)
     {
+        // put the captured frame in Mat object
         cap >> frame;
+
+        // Find the contour of the country in the center
         hull1 =  ContoursFrame_WholeMap(frame);
         if(!hull1.empty())
         {
             testshape = 100;
+
+            // We iterate over every country contour and compare it with the contour of the country in the center
             for(int matchShapeCounter = 0; matchShapeCounter < CountryContours.size(); matchShapeCounter++)
             {
+                // calculate similarity between 2 contours, how lower the result, how more simularity there is
+                // rotation and scale invariant
+                // based on hue moments
+                // source: https://docs.opencv.org/3.0-beta/doc/py_tutorials/py_imgproc/py_contours/py_contours_more_functions/py_contours_more_functions.html
                 temp_testshape = matchShapes(hull1, CountryContours.at(matchShapeCounter),1,1);
                 cout << "match value: " <<temp_testshape << endl;
+
+                // save the most similar country shape, and below certain threshold to ensure we have a country
                 if(temp_testshape <= testshape && temp_testshape < thresholdSliderDouble)
                 {
                     testshape = temp_testshape;
@@ -129,8 +144,10 @@ int main(int argc,const char** argv)
             cout << "test shape" << testshape << endl;
             cout << "thresholdSliderDouble" << thresholdSliderDouble << endl;
         }
-        imshow( "thresholds",frame);
+        resize(frame, FrameSmall, Size(ImageWidth, ImageHeight));
+        imshow( "thresholds",FrameSmall);
 
+        // iterate over the images of the found country and show them
         for(int ImageCounter = 0; ImageCounter <picturesVector.at(index).size(); ImageCounter++)
         {
             string temp_string = "foto"+ImageCounter;
@@ -139,6 +156,7 @@ int main(int argc,const char** argv)
                 imshow(temp_string, picturesVector.at(index).at(ImageCounter));
 
             }
+            // if no country found, show default image
             else
             {
                 imshow(temp_string, defaultPicture);
@@ -148,7 +166,7 @@ int main(int argc,const char** argv)
 
 
 
-
+        //When q is pressed, the program stops
         stop = (char) waitKey(30);
         if (stop == 'q')
         {
@@ -157,7 +175,6 @@ int main(int argc,const char** argv)
     }
 
 
-    waitKey(0);
     return 0;
 }
 
@@ -169,8 +186,10 @@ vector<string> getCountrylist(string pathName)
     vector<string> returnNames;
     vector<String> fileNames;
     String fullPathName = pathName + "/*.jpg";
+    // read every filename in directory
     glob(fullPathName, fileNames, false);
 
+    // we delete the.jpg and only save the name itself
     string tempString;
     for (size_t i=0; i<fileNames.size(); i++)
     {
@@ -190,6 +209,8 @@ vector<string> getCountrylist(string pathName)
 
 vector<vector<Point>> getCountryContours(string pathName)
 {
+    // This is a method based on Colour like Labo 2. This is because the first version used colour to detect a country.
+    // The disadvantage was we could only show 1 contour of a country
     // vector filled with the contours of the countries
     vector<vector<Point>> contoursList;
 
@@ -199,6 +220,9 @@ vector<vector<Point>> getCountryContours(string pathName)
     Mat Total_Contour;
     //temporary contour vector for pushing in other vector
     vector<Point> contour;
+
+    Point2f center;
+    float radius;
 
     //stick .jpg after string
     String fullPathName = pathName + "/*.jpg";
@@ -231,6 +255,7 @@ vector<vector<Point>> getCountryContours(string pathName)
         // We only keep the biggest contour
         for(size_t j=0; j<Allcontours.size(); j++)
         {
+            // only the biggest country to compare
             if(contourArea(Allcontours.at(j)) > 50000)
             {
                 contoursList.push_back(Allcontours.at(j));
@@ -238,26 +263,21 @@ vector<vector<Point>> getCountryContours(string pathName)
         }
 
     }
+    // drawcontours needs a vector of vectorpoints
     vector< vector<Point>> test;
     test.push_back(contoursList.at(1));
 
-
-
-
-
-   Point2f center;
-    float radius;
- //   minEnclosingCircle(test.at(0), center, radius);
     Total_Contour = Mat::zeros(CountryImage.rows, CountryImage.cols, CV_8UC3);
     drawContours(Total_Contour, test, -1, 255, -1);
+
+    // find the center of our contour
     Moments moment = moments((cv::Mat)test.at(0));
     double area = moment.m00;
     int x,y;
     x = moment.m10/area;
     y = moment.m01/area;
     circle( Total_Contour, Point(x,y), 7, Scalar( 0, 0, 255 ), FILLED, LINE_8 );
- /*   circle( Total_Contour, center, 7, Scalar( 0, 0, 255 ), FILLED, LINE_8 );
-    circle( Total_Contour, center, radius, Scalar( 255, 0, 255 ), 2, LINE_8 );*/
+    resize(Total_Contour, Total_Contour, Size(ImageWidth, ImageHeight));
     imshow("Total_Contour", Total_Contour);
 
     return contoursList;
@@ -287,6 +307,7 @@ vector<vector<Mat>> get_vacation_pictures(vector<string> countrynames, string pa
         for (size_t i=0; i<picture_count; i++)
         {
             tempImage = imread(fileNames.at(i), IMREAD_COLOR);
+            // make them smaller
             resize(tempImage, tempImage, Size(ImageWidth, ImageHeight));
             tempVector.push_back(tempImage);
         }
@@ -300,6 +321,7 @@ vector<vector<Mat>> get_vacation_pictures(vector<string> countrynames, string pa
 
 vector<Point> ContoursFrame_WholeMap(Mat image)
 {
+    //variables
     vector< vector<Point>> contours;
     vector< vector<Point>> bigContours;
     vector<Point2f>center( contours.size() );
@@ -326,14 +348,16 @@ vector<Point> ContoursFrame_WholeMap(Mat image)
     clahe_pointer->apply(ImageGray.clone(), result_clahe);
     Mat claheThreshold = Mat::zeros(ImageGray.rows, ImageGray.cols, CV_8UC1);
     threshold(result_clahe, claheThreshold, 0, 255, THRESH_BINARY | THRESH_OTSU);
-    imshow("CLAHE ", claheThreshold);
+    Mat ClaheSmall;
+    resize(claheThreshold, ClaheSmall, Size(ImageWidth, ImageHeight));
+    imshow("CLAHE ", ClaheSmall);
 
     ///contours
     // search for contours in the thresholded frame
     findContours(claheThreshold.clone(), contours,  RETR_EXTERNAL, CHAIN_APPROX_NONE);
 
 
-    //
+    // We only want bigger contours. Smalls ones are difficult to compare
     for(int i=0; i<contours.size(); i++)
     {
         areaContour = contourArea(contours.at(i));
@@ -344,13 +368,17 @@ vector<Point> ContoursFrame_WholeMap(Mat image)
         }
     }
 
+    //We draw the contours on a seperate image
     Mat ContoursTotal;
     ContoursTotal = Mat::zeros(image.rows, image.cols, CV_8UC3);
     drawContours(ContoursTotal, bigContours, -1, 255, -1);
 
 
+    //We calculate the center of the contours and look which one is closest to the center of the frame
     for(int j = 0; j < bigContours.size(); j++)
     {
+        // Image moments help you to calculate some features like center of mass of the object, area of the object etc.
+        // source: https://docs.opencv.org/3.4.2/dd/d49/tutorial_py_contour_features.html.
         moment = moments((cv::Mat)bigContours.at(j));
         area = moment.m00;
         x = moment.m10/area;
@@ -364,11 +392,14 @@ vector<Point> ContoursFrame_WholeMap(Mat image)
             returnIndexbigContours = j;
         }
     }
+
+    //draw the center on the total image
     circle( ContoursTotal, Point(xClosest,yClosest), 7, Scalar( 0, 0, 255 ), FILLED, LINE_8 );
+    Mat ContourSmall;
+    resize(ContoursTotal, ContourSmall, Size(ImageWidth, ImageHeight));
+    imshow("ContoursTotal", ContourSmall);
 
-    imshow("ContoursTotal", ContoursTotal);
-
-
+    // return the center contour or an empty contour if nothing is found
     if(!bigContours.empty())
     {
         return bigContours.at(returnIndexbigContours);
