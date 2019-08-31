@@ -6,46 +6,42 @@ using namespace std;
 using namespace cv;
 
 
-
-///functions
-
-vector<string> getCountrylist(string pathName);
-vector<vector<Point>> getCountryContours(string pathName);
-
-
-vector<Point> component_analyse(Mat image);
-vector<Point> ContoursFrame_WholeMap(Mat image);
-
-vector<Point> get_hulls(Mat image);
-
-vector<vector<Mat>> get_vacation_pictures(vector<string> countrynames, string pathNameToVacation);
-
-
-static void on_trackbar( int, void* )
-{
-
-}
-
-
-
 /// Global variables
 
 // default values for the sliders
-int hue_min_slider = 50;
-int hue_max_slider = 85;
+int thresholdSlider = 12;
+double thresholdSliderDouble = (double)thresholdSlider/100;
 
-int saturation_min_slider = 60;
-int saturation_max_slider = 255;
-
-int value_min_slider = 60;
-int value_max_slider = 255;
+int ImageWidth = 200;
+int ImageHeight = 200;
 
 
+///functions
+
+//get a vector filled with every country name
+vector<string> getCountrylist(string pathName);
+//get a vector filled with every country contour
+vector<vector<Point>> getCountryContours(string pathName);
+
+// returns the contour of the country with it's center closest to frame center
+vector<Point> ContoursFrame_WholeMap(Mat image);
+
+// vector with all the vacation pictures. Index = which country
+vector<vector<Mat>> get_vacation_pictures(vector<string> countrynames, string pathNameToVacation);
+
+
+//
+static void on_trackbar( int, void* )
+{
+    thresholdSliderDouble = (double)thresholdSlider/100;
+}
 
 int main(int argc,const char** argv)
 {
     string pathName = "/home/paul/Desktop/school/1819/2018_beeldinterpretatie_Leroy_Paul/AR_Landkaart_Leroy/AR_Landkaart/country_contours";
     string pathNameToVacation = "/home/paul/Desktop/school/1819/2018_beeldinterpretatie_Leroy_Paul/AR_Landkaart_Leroy/AR_Landkaart/vacation_pictures";
+    string defaultPictureName = "default.jpg";
+    Mat defaultPicture;
     // vector filled with names of everey country with a contour
     vector<string> CountryList = getCountrylist(pathName);
 
@@ -67,20 +63,6 @@ int main(int argc,const char** argv)
 
     picturesVector = get_vacation_pictures(CountryList, pathNameToVacation);
 
-
-/*    for(int test = 0; test<testinlees.at(0).size(); test++)
-    {
-        string teststring;
-        teststring = "test" + test;
-        imshow(teststring, testinlees.at(0).at(test));
-    }
-*/
-    string ImageName1 = "Belgium.jpg";
-    Mat Image1;
-
-    string ImageName2 = "vorm2.jpg";
-    Mat Image2;
-
     char stop;
     Mat frame;
 
@@ -92,20 +74,19 @@ int main(int argc,const char** argv)
     );
 
 
-// ------------------------------------------------------------------------ reading in test Image-------------------------------------------------
-   Image1 = imread(ImageName1, IMREAD_COLOR);
-   Image2 = imread(ImageName2, IMREAD_COLOR);
+// ------------------------------------------------------------------------ reading in Images-------------------------------------------------
 
+   defaultPicture = imread(defaultPictureName, IMREAD_COLOR);
 
-    if( Image1.empty() )                      /// Check for invalid input
+    if( defaultPicture.empty() )                      /// Check for invalid input
     {
         cout <<  "Could not open or find image1" << std::endl ;
         return -1;
     }
+    resize(defaultPicture, defaultPicture, Size(ImageWidth, ImageHeight));
 
-    imshow( "Original image", Image1 );
-
-        //read out webcam
+    //read out webcam
+    //cap 1 is the external camera
     VideoCapture cap(1);
 
     if(!cap.isOpened())
@@ -113,33 +94,23 @@ int main(int argc,const char** argv)
         cout << "Cam could notbe opened" << endl;
         return -1;
     }
-    waitKey(100);
    // ------------------------------------------------------------------------ --------------------------------------------------------------------
-    component_analyse(Image1);
    /// We are going to base ourself on Session 2:
    /// Search red in our image
     namedWindow("thresholds", WINDOW_AUTOSIZE); // Create Window
-    createTrackbar( "HUE minimum", "thresholds", &hue_min_slider, 180, on_trackbar );
-    createTrackbar( "HUE maximum", "thresholds", &hue_max_slider, 180, on_trackbar );
-    createTrackbar( "Saturation minimum", "thresholds", &saturation_min_slider, 255, on_trackbar );
-    createTrackbar( "Saturation maximum", "thresholds", &saturation_max_slider, 255, on_trackbar );
-    createTrackbar( "value minimimum", "thresholds", &value_min_slider, 255, on_trackbar );
-    createTrackbar( "value maximum", "thresholds", &value_max_slider, 255, on_trackbar );
-    imshow( "thresholds",Image1);
+    createTrackbar( "threshold", "thresholds", &thresholdSlider, 50, on_trackbar );
+    imshow( "thresholds",defaultPicture);
     vector<Point> hull1;
     vector<Point> hull2;
     vector<Point> hull3;
     double testshape = 100;
     //auto start, ende;
     int index;
-    hull2 = get_hulls(Image1);
-    hull3 = get_hulls(Image2);
     double temp_testshape = 100;
     while (true)
     {
         cap >> frame;
         hull1 =  ContoursFrame_WholeMap(frame);
-        hull2 = get_hulls(Image1);
         if(!hull1.empty())
         {
             testshape = 100;
@@ -147,7 +118,7 @@ int main(int argc,const char** argv)
             {
                 temp_testshape = matchShapes(hull1, CountryContours.at(matchShapeCounter),1,1);
                 cout << "match value: " <<temp_testshape << endl;
-                if(temp_testshape <= testshape && temp_testshape < 0.2)
+                if(temp_testshape <= testshape && temp_testshape < thresholdSliderDouble)
                 {
                     testshape = temp_testshape;
                     index = matchShapeCounter;
@@ -156,13 +127,23 @@ int main(int argc,const char** argv)
             //cout << "testshape:" << index << endl;
             cout << "detected country" << CountryList.at(index) << endl;
             cout << "test shape" << testshape << endl;
+            cout << "thresholdSliderDouble" << thresholdSliderDouble << endl;
         }
         imshow( "thresholds",frame);
 
         for(int ImageCounter = 0; ImageCounter <picturesVector.at(index).size(); ImageCounter++)
         {
             string temp_string = "foto"+ImageCounter;
-            imshow(temp_string, picturesVector.at(index).at(ImageCounter));
+            if(testshape < thresholdSliderDouble)
+            {
+                imshow(temp_string, picturesVector.at(index).at(ImageCounter));
+
+            }
+            else
+            {
+                imshow(temp_string, defaultPicture);
+            }
+           // imshow(temp_string, picturesVector.at(index).at(ImageCounter));
         }
 
 
@@ -181,105 +162,7 @@ int main(int argc,const char** argv)
 }
 
 
-/// This was the first version, We detect countries based on the color green. We were limited by only viewing one contour, no map.
-vector<Point> component_analyse(Mat image)
-{
-    //afbeelding omzetten naar HSV
-    Mat image_hsv;
-    cvtColor(image, image_hsv, CV_BGR2HSV);
-    imshow("image in HSV domein", image_hsv);
 
-
-    int hue_low= hue_min_slider;
-    int saturation_low = saturation_min_slider;
-    int value_low = value_min_slider;
-
-    int hue_high = hue_max_slider;
-    int saturation_high = saturation_max_slider;
-    int value_high = value_max_slider;
-
-    Mat finaal(image.rows, image.cols, CV_8UC3);
-    inRange(image_hsv, Scalar(hue_low, saturation_low, value_low), Scalar(hue_high, saturation_high, value_high), finaal);
-
-    imshow("segmenteer threshold HSV", finaal);
-
-    //Closing
-
-    dilate(finaal, finaal, Mat(), Point(-1,-1), 5);
-    erode(finaal, finaal, Mat(), Point(-1,-1), 5);
-    imshow("closing", finaal);
-
-
-    ///contours en hulls
-
-    vector< vector<Point>> contours;
-    findContours(finaal.clone(), contours,  RETR_EXTERNAL, CHAIN_APPROX_NONE);
-    vector< vector<Point>> hulls;
-
-    for(size_t i=0; i<contours.size(); i++)
-    {
-        double area0 = contourArea(contours.at(i));
-        if(area0 > 50000)
-        {
-            hulls.push_back(contours.at(i));
-        }
-    }
-   // printf("contour size of frames: %d \r\n", hulls.size());
-    drawContours(finaal, hulls, -1, 255, -1);
-    imshow("contours", finaal);
-
-
-    Mat contours2;
-    contours2 = Mat::zeros(image.rows, image.cols, CV_8UC3);
-    drawContours(contours2, hulls, -1, 255, -1);
-    imshow("contours2", contours2);
-
-    ///samenvoegen afbeelding met masker over
-
-    Mat totaal;
-    totaal = Mat::zeros(image.rows, image.cols, CV_8UC3);
-    image.copyTo(totaal,finaal);
-    imshow("totaal", totaal);
-
-    if(!hulls.empty())
-    {
-        return hulls.at(0);
-    }
-    else
-    {
-        return vector<Point>();
-    }
-}
-
-
-vector<Point> get_hulls(Mat image)
-{
-    Mat image_hsv;
-    cvtColor(image, image_hsv, CV_BGR2HSV);
-    Mat finaal(image.rows, image.cols, CV_8UC3);
-    inRange(image_hsv, Scalar(0, 100, 0), Scalar(180, 255, 255), finaal);
-    imshow("get_hulls", finaal);
-
-        ///contours en hulls
-
-    vector< vector<Point>> contours;
-    findContours(finaal.clone(), contours,  RETR_EXTERNAL, CHAIN_APPROX_NONE);
-    vector< vector<Point>> hulls;
-
-    for(size_t i=0; i<contours.size(); i++)
-    {
-            hulls.push_back(contours.at(i));
-   //         cout << "contour grootte van templates:" << contourArea(contours.at(i)) << endl;
-    }
-
-    Mat contours2;
-    contours2 = Mat::zeros(image.rows, image.cols, CV_8UC3);
-    drawContours(contours2, hulls, -1, 255, -1);
-    imshow("contours van template", contours2);
-
-  //  printf("hulls shape: %d \r\n", hulls.size() );
-    return hulls.at(0);
-}
 
 vector<string> getCountrylist(string pathName)
 {
@@ -404,6 +287,7 @@ vector<vector<Mat>> get_vacation_pictures(vector<string> countrynames, string pa
         for (size_t i=0; i<picture_count; i++)
         {
             tempImage = imread(fileNames.at(i), IMREAD_COLOR);
+            resize(tempImage, tempImage, Size(ImageWidth, ImageHeight));
             tempVector.push_back(tempImage);
         }
         picturesList.push_back(tempVector);
@@ -416,69 +300,58 @@ vector<vector<Mat>> get_vacation_pictures(vector<string> countrynames, string pa
 
 vector<Point> ContoursFrame_WholeMap(Mat image)
 {
-        ///kasticket
-     Mat Image2;
-    cvtColor(image, Image2, CV_BGR2GRAY);
-    Mat maskAA;
-    threshold(Image2,maskAA,0,255,THRESH_OTSU | THRESH_BINARY);
-    imshow("OTSU",maskAA);
-    // probleem: groot deel van ons ticket is niet meer zichtbaar
-
-    /// Histogram equalization
-    Mat maskA;
-    equalizeHist(Image2.clone(), maskA);
-    imshow("equalized", maskA);
-    threshold(maskA,maskAA,0,255,THRESH_OTSU | THRESH_BINARY);
-    imshow("uqualized en otsu",maskAA);
-
-    /// CLAHE
-    Mat result_clahe;
-     Ptr<CLAHE> clahe_pointer = createCLAHE();
-    clahe_pointer->setTilesGridSize(Size(15,15));
-    clahe_pointer->setClipLimit(1);
-    clahe_pointer->apply(Image2.clone(), result_clahe);
-    threshold(result_clahe, maskAA, 0, 255, THRESH_BINARY | THRESH_OTSU);
-    imshow("CLAHE ", maskAA);
-
-
-///zelfde doen als sessie 1
-    ///contours en hulls
-    Mat contours2;
     vector< vector<Point>> contours;
-    findContours(maskAA.clone(), contours,  RETR_EXTERNAL, CHAIN_APPROX_NONE);
-    vector< vector<Point>> hulls;
-  vector<Point2f>center( contours.size() );
-  vector<float>radius( contours.size() );
-    for(int i=0; i<contours.size(); i++)
-    {
-       // cout << "kommek ik hier al in?" << endl;
-
-
-        double area0 = contourArea(contours.at(i));
-        if(area0 > 40000)
-        {
-            hulls.push_back(contours.at(i));
-
-         //   minEnclosingCircle(contours.at(i), center[i], radius[i]);
-        }
-    }
-   // printf("contour size of frames: %d \r\n", hulls.size());
-
-
-
-
-    contours2 = Mat::zeros(image.rows, image.cols, CV_8UC3);
-    drawContours(contours2, hulls, -1, 255, -1);
-
+    vector< vector<Point>> bigContours;
+    vector<Point2f>center( contours.size() );
+    vector<float>radius( contours.size() );
+    double areaContour;
     Moments moment;
     double area;
     int x,y;
     int xClosest =0;
     int yClosest =0;
-    int returnIndexHulls = 0;
-    for(int j = 0; j < hulls.size(); j++)
+    int returnIndexbigContours = 0;
+    Mat ImageGray;
+    cvtColor(image, ImageGray, CV_BGR2GRAY);
+
+    /// CLAHE
+    // thresholding
+    // Less noise than OTSU
+    //contrast amplification is limited, so as to reduce this problem of noise amplification.
+    //source: https://en.wikipedia.org/wiki/Adaptive_histogram_equalization#Contrast_Limited_AHE
+    Mat result_clahe;
+    Ptr<CLAHE> clahe_pointer = createCLAHE();
+    clahe_pointer->setTilesGridSize(Size(15,15));
+    clahe_pointer->setClipLimit(1);
+    clahe_pointer->apply(ImageGray.clone(), result_clahe);
+    Mat claheThreshold = Mat::zeros(ImageGray.rows, ImageGray.cols, CV_8UC1);
+    threshold(result_clahe, claheThreshold, 0, 255, THRESH_BINARY | THRESH_OTSU);
+    imshow("CLAHE ", claheThreshold);
+
+    ///contours
+    // search for contours in the thresholded frame
+    findContours(claheThreshold.clone(), contours,  RETR_EXTERNAL, CHAIN_APPROX_NONE);
+
+
+    //
+    for(int i=0; i<contours.size(); i++)
     {
-        moment = moments((cv::Mat)hulls.at(j));
+        areaContour = contourArea(contours.at(i));
+
+        if(areaContour > 40000)
+        {
+            bigContours.push_back(contours.at(i));
+        }
+    }
+
+    Mat ContoursTotal;
+    ContoursTotal = Mat::zeros(image.rows, image.cols, CV_8UC3);
+    drawContours(ContoursTotal, bigContours, -1, 255, -1);
+
+
+    for(int j = 0; j < bigContours.size(); j++)
+    {
+        moment = moments((cv::Mat)bigContours.at(j));
         area = moment.m00;
         x = moment.m10/area;
         y = moment.m01/area;
@@ -488,17 +361,17 @@ vector<Point> ContoursFrame_WholeMap(Mat image)
         {
             xClosest = x;
             yClosest = y;
-            returnIndexHulls = j;
+            returnIndexbigContours = j;
         }
     }
-    circle( contours2, Point(xClosest,yClosest), 7, Scalar( 0, 0, 255 ), FILLED, LINE_8 );
+    circle( ContoursTotal, Point(xClosest,yClosest), 7, Scalar( 0, 0, 255 ), FILLED, LINE_8 );
 
-    imshow("contours2", contours2);
+    imshow("ContoursTotal", ContoursTotal);
 
 
-    if(!hulls.empty())
+    if(!bigContours.empty())
     {
-        return hulls.at(returnIndexHulls);
+        return bigContours.at(returnIndexbigContours);
     }
     else
     {
